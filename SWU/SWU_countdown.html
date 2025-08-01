@@ -418,7 +418,7 @@
             clearInterval(timerInterval);
             isRunning = false;
             isPaused = false;
-            totalSeconds = 0;
+            setTimerFromInputs();
             updateDisplay();
             document.getElementById('status').textContent = 'Prepare for launch';
             document.getElementById('timerDisplay').classList.remove('finished');

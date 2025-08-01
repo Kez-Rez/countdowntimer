@@ -348,7 +348,7 @@
             clearInterval(timerInterval);
             isRunning = false;
             isPaused = false;
-            totalSeconds = 0;
+            setTimerFromInputs();
             updateDisplay();
             document.getElementById('status').textContent = 'Be Prepared';
             document.getElementById('timerDisplay').classList.remove('finished');
