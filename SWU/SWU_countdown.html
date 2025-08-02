@@ -15,6 +15,7 @@
              background: url(star_wars.png) no-repeat center center fixed;
             background-size: cover;
             color: white;
+            zoom: calc(100vw / 1920 * 100%);
         }
         
         .timer-container {
@@ -226,6 +227,17 @@
         @keyframes flash {
             0%, 100% { opacity: 0; }
             50% { opacity: 0.8; }
+        }
+
+        /* Responsive scaling for different resolutions */
+        @media screen and (max-width: 1920px) {
+            body { zoom: calc(100vw / 1920 * 100%); }
+        }
+        @media screen and (min-width: 1921px) and (max-width: 2560px) {
+            body { zoom: calc(100vw / 2560 * 133%); }
+        }
+        @media screen and (min-width: 2561px) {
+            body { zoom: calc(100vw / 3840 * 200%); }
         }
     </style>
 </head>
