@@ -13,7 +13,7 @@
             min-height: 100vh;
             margin: 0;
              /* REPLACE THIS AREA - Background image */
-             background: url(lorcana_timer.png) no-repeat center center fixed;
+             background: url(star_wars.png) no-repeat center center fixed;
             background-size: cover;
             color: white;
         }
@@ -215,7 +215,7 @@
             width: 100%;
             height: 100%;
             /* REPLACE THIS AREA - Flash overlay image */
-            background-image: url(late.png);
+            background-image: url(deathstar.jpg);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -234,7 +234,7 @@
 <body>
     <div class="timer-container">
         <!-- REPLACE THIS AREA - Main heading text -->
-        <h1>Lorcana</h1>
+        <h1>Star Wars Unlimited</h1>
         
         <div class="text-area-section">
             <textarea id="userText"></textarea>
@@ -267,7 +267,7 @@
         
         <div class="status" id="status">
             <!-- REPLACE THIS AREA - Initial status text -->
-            Ready
+            Prepare for launch
         </div>
     </div>
     <div id="flashOverlay"></div>
@@ -303,7 +303,7 @@
                     hasFinished = true;
                     isTimerActive = false;
                     // REPLACE THIS AREA - Timer finished message
-                    document.getElementById('status').textContent = 'Out of time';
+                    document.getElementById('status').textContent = 'It\'s Bad Luck Ghorman';
                     document.getElementById('timerDisplay').classList.add('finished');
                     document.getElementById('startBtn').textContent = 'Start';
 
@@ -361,7 +361,7 @@
             
             try {
                 // REPLACE THIS AREA - Sound file for timer completion
-                const audio = new Audio('magic-colorsmp3-14899.mp3'); // audio from https://pixabay.com/
+                const audio = new Audio('game-level-complete-143022.mp3'); // audio from https://pixabay.com/users/universfield-28281460/
                 audio.volume = 0.8;
                 currentAudio = audio;
                 
@@ -446,7 +446,7 @@
             isPaused = false;
             hasFinished = false;
             // REPLACE THIS AREA - Status message when timer starts
-            document.getElementById('status').textContent = 'Even miracles take a little time';
+            document.getElementById('status').textContent = 'Countdown initiated';
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
@@ -454,7 +454,7 @@
             if (isTimerActive) {
                 isPaused = true;
                 // REPLACE THIS AREA - Status message when timer is paused
-                document.getElementById('status').textContent = 'Pause';
+                document.getElementById('status').textContent = 'Holding position';
 
                 const overlay = document.getElementById('flashOverlay');
                 overlay.style.animation = 'none';
@@ -472,7 +472,7 @@
             setTimerFromInputs();
             updateDisplay();
             // REPLACE THIS AREA - Status message when timer is reset
-            document.getElementById('status').textContent = 'Be Prepared!';
+            document.getElementById('status').textContent = 'Prepare for launch';
             document.getElementById('timerDisplay').classList.remove('finished');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';

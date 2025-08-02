@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer App</title>
     <style>
         body {
@@ -12,43 +12,47 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: url(grookey.jpg) no-repeat center center fixed;
+             /* REPLACE THIS AREA - Background image */
+             background: url(grookey.jpg) no-repeat center center fixed;
             background-size: cover;
-            color: rgb(68, 22, 14);
+            color: white;
         }
-
+        
         .timer-container {
             text-align: center;
             background: rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
+            padding: 15px 15px 15px 15px;
+            border-radius: 12px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             min-width: 400px;
+            width: 100%;
+            max-width: 500px;
         }
-
+        
         .timer-display {
-            font-size: 4rem;
+            font-size: 6.3rem;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 15px 0;
             font-family: 'Courier New', monospace;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
+            width: 100%;
         }
-
+        
         .text-area-section {
-            margin: 20px 0;
+            margin: 15px 0;
         }
-
+        
         .text-area-section textarea {
             width: 100%;
             height: 80px;
-            padding: 12px;
+            padding: 4px;
             font-size: 1.5rem;
             font-family: 'Arial', sans-serif;
             border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            color: rgb(46, 105, 4);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #E8E8E8;
             backdrop-filter: blur(5px);
             resize: vertical;
             box-sizing: border-box;
@@ -58,26 +62,27 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
-
+        
         .text-area-section textarea::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(232, 232, 232, 0.7);
         }
-
+        
         .text-area-section textarea:focus {
             outline: 2px solid rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.7);
         }
-
+        
         .input-section {
-            margin: 30px 0;
+            margin: 15px 0;
         }
-
+        
         .time-input {
             display: inline-block;
             margin: 0 10px;
         }
-
+        
         .time-input input {
             width: 60px;
             padding: 10px;
@@ -86,109 +91,130 @@
             border: none;
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.2);
-            color: rgb(19, 112, 9);
+            color: white;
             backdrop-filter: blur(5px);
         }
-
+        
         .time-input input::placeholder {
             color: rgba(255, 255, 255, 0.7);
         }
-
+        
         .time-input label {
             display: block;
             margin-bottom: 5px;
             font-size: 0.9rem;
             opacity: 0.8;
         }
-
+        
         .controls {
             margin: 30px 0;
         }
-
+        
         button {
-            padding: 12px 24px;
-            margin: 0 10px;
-            font-size: 1.1rem;
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
         }
-
+        
         .start-btn {
             background: #4CAF50;
-            color: rgb(68, 22, 14);
+            color: white;
         }
-
+        
         .start-btn:hover {
             background: #45a049;
             transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
         }
-
+        
         .pause-btn {
             background: #ff9800;
-            color: rgb(68, 22, 14);
+            color: white;
         }
-
+        
         .pause-btn:hover {
             background: #e68900;
             transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
         }
-
+        
         .reset-btn {
             background: #f44336;
-            color: rgb(68, 22, 14);
+            color: white;
         }
-
+        
         .reset-btn:hover {
             background: #da190b;
             transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
         }
-
+        
         .status {
             margin: 20px 0;
             font-size: 1.2rem;
             font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
-
+        
         .finished {
             animation: pulse 1s infinite;
         }
 
         .fullscreen-btn {
-            background: transparent;
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
             border: none;
-            padding: 10px;
+            border-radius: 6px;
             cursor: pointer;
-            border-radius: 8px;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            background: #2196F3;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
         }
 
         .fullscreen-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
         }
 
         .sound-enabled {
-            color: #4CAF50;
+            background: #9C27B0 !important;
         }
 
         .sound-disabled {
-            color: #f44336;
+            background: #FF8C00 !important;
         }
-
+        
+        h1 {
+            font-size: 3rem;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-
         #flashOverlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            /* REPLACE THIS AREA - Flash overlay image */
             background-image: url(pokeball.jpg);
             background-size: cover;
             background-position: center;
@@ -207,14 +233,15 @@
 </head>
 <body>
     <div class="timer-container">
+        <!-- REPLACE THIS AREA - Main heading text -->
         <h1>Pokémon TCG</h1>
-
+        
         <div class="text-area-section">
-            <textarea id="userText" placeholder=""></textarea>
+            <textarea id="userText"></textarea>
         </div>
-
+        
         <div class="timer-display" id="timerDisplay">00:00:00</div>
-
+        
         <div class="input-section">
             <div class="time-input">
                 <label>Hours</label>
@@ -229,57 +256,111 @@
                 <input type="number" id="seconds" min="0" max="59" value="0" placeholder="0">
             </div>
         </div>
-
-        <div class="controls">
-            <button class="start-btn" id="startBtn">Start</button>
-            <button class="pause-btn" id="pauseBtn">Pause</button>
-            <button class="reset-btn" id="resetBtn">Reset</button>
+        
+    <div class="controls">
+    <button class="start-btn" id="startBtn">Start</button>
+    <button class="pause-btn" id="pauseBtn">Pause</button>
+    <button class="reset-btn" id="resetBtn">Reset</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen">🔲</button>
+    <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
+</div>
+        
+        <div class="status" id="status">
+            <!-- REPLACE THIS AREA - Initial status text -->
+            A wild timer appeared!
         </div>
-
-        <div style="margin-top: 10px;">
-            <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen">🔲</button>
-            <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
-        </div>
-
-        <div class="status" id="status">A wild timer appeared!</div>
     </div>
-
     <div id="flashOverlay"></div>
 
-    <!-- Script goes here -->
     <script>
-        let timerInterval;
+        // Global variables
         let totalSeconds = 0;
-        let isRunning = false;
+        let isTimerActive = false; // This controls whether the timer should count down
         let isPaused = false;
         let audioEnabled = true;
         let currentAudio = null;
         let soundTimeouts = [];
+        let hasTriggered5MinWarning = false;
+        let hasFinished = false;
+
+        // Start the continuous ticker immediately
+        const continuousInterval = setInterval(ticker, 1000);
+
+        // The main ticker function that runs every second
+        function ticker() {
+            if (isTimerActive && !isPaused && totalSeconds > 0) {
+                totalSeconds--;
+                updateDisplay();
+
+                // Check for 5-minute warning
+                if (totalSeconds === 300 && !hasTriggered5MinWarning) {
+                    hasTriggered5MinWarning = true;
+                    triggerFlash(5);
+                }
+
+                // Check if timer finished
+                if (totalSeconds <= 0 && !hasFinished) {
+                    hasFinished = true;
+                    isTimerActive = false;
+                    // REPLACE THIS AREA - Timer finished message
+                    document.getElementById('status').textContent = 'Out of time';
+                    document.getElementById('timerDisplay').classList.add('finished');
+                    document.getElementById('startBtn').textContent = 'Start';
+
+                    triggerFlash(300);
+                    playNotificationSound();
+                }
+            }
+        }
 
         function toggleAudio() {
+            console.log('toggleAudio called, current state:', audioEnabled);
             const soundBtn = document.getElementById('soundBtn');
-            audioEnabled = !audioEnabled;
-            soundBtn.textContent = audioEnabled ? '🔊' : '🔇';
-            soundBtn.className = audioEnabled ? 'fullscreen-btn sound-enabled' : 'fullscreen-btn sound-disabled';
-            soundBtn.title = audioEnabled ? 'Disable Sound' : 'Enable Sound';
-
-            if (!audioEnabled) stopCurrentAudio();
+            
+            if (!audioEnabled) {
+                audioEnabled = true;
+                soundBtn.textContent = '🔊';
+                soundBtn.className = 'fullscreen-btn sound-enabled';
+                soundBtn.title = 'Disable Sound';
+                console.log('Audio ENABLED');
+            } else {
+                audioEnabled = false;
+                stopCurrentAudio();
+                soundBtn.textContent = '🔇';
+                soundBtn.className = 'fullscreen-btn sound-disabled';
+                soundBtn.title = 'Enable Sound';
+                console.log('Audio DISABLED');
+            }
         }
 
         function stopCurrentAudio() {
-            if (currentAudio && typeof currentAudio.pause === 'function') {
+            console.log('STOPPING ALL AUDIO - current audio exists:', !!currentAudio, 'timeouts count:', soundTimeouts.length);
+            
+            if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
+                currentAudio = null;
+                console.log('Audio stopped and cleared');
             }
-            currentAudio = null;
-            soundTimeouts.forEach(clearTimeout);
+            
+            soundTimeouts.forEach((timeout, index) => {
+                clearTimeout(timeout);
+                console.log('Cleared timeout', index);
+            });
             soundTimeouts = [];
+            console.log('All timeouts cleared');
         }
 
         function playNotificationSound() {
-            if (!audioEnabled) return;
-
+            if (!audioEnabled) {
+                console.log('Audio not enabled - no sound will play');
+                return;
+            }
+            
+            console.log('Starting sound notification sequence');
+            
             try {
+                // REPLACE THIS AREA - Sound file for timer completion
                 const audio = new Audio('game-level-complete-143022.mp3'); // audio from https://pixabay.com/users/universfield-28281460/
                 audio.volume = 0.8;
                 currentAudio = audio;
@@ -316,84 +397,97 @@
                 }
                 
                 playSound();
+                
             } catch (e) {
-                console.log('Sound play failed:', e);
+                console.log('Sound creation failed:', e);
             }
         }
 
         function formatTime(seconds) {
-            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            return `${h}:${m}:${s}`;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
         function updateDisplay() {
-            document.getElementById('timerDisplay').textContent = formatTime(totalSeconds);
+            const timeString = formatTime(totalSeconds);
+            document.getElementById('timerDisplay').textContent = timeString;
+            // Update the page title/tab with the countdown
+            if (isTimerActive && !isPaused && totalSeconds > 0) {
+                document.title = `${timeString} - Star Wars Timer`;
+            } else if (totalSeconds <= 0 && hasFinished) {
+                document.title = "Time's Up! - Star Wars Timer";
+            } else {
+                document.title = "Star Wars Timer";
+            }
         }
 
         function setTimerFromInputs() {
-            const h = parseInt(document.getElementById('hours').value) || 0;
-            const m = parseInt(document.getElementById('minutes').value) || 0;
-            const s = parseInt(document.getElementById('seconds').value) || 0;
-            totalSeconds = h * 3600 + m * 60 + s;
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value) || 0;
+            totalSeconds = hours * 3600 + minutes * 60 + seconds;
             updateDisplay();
         }
 
         function startTimer() {
-            if (!isRunning && !isPaused) setTimerFromInputs();
-            if (totalSeconds <= 0) return document.getElementById('status').textContent = 'Please set a time first!';
+            if (!isTimerActive && !isPaused) {
+                setTimerFromInputs();
+            }
 
-            isRunning = true;
+            if (totalSeconds <= 0) {
+                // REPLACE THIS AREA - Error message when no time is set
+                document.getElementById('status').textContent = 'Please set a time first!';
+                return;
+            }
+
+            isTimerActive = true;
             isPaused = false;
+            hasFinished = false;
+            // REPLACE THIS AREA - Status message when timer starts
             document.getElementById('status').textContent = 'Gotta catch them all!';
             document.getElementById('startBtn').textContent = 'Resume';
-
-            timerInterval = setInterval(() => {
-                totalSeconds--;
-                updateDisplay();
-
-                if (totalSeconds === 300) triggerFlash(5);
-                if (totalSeconds <= 0) {
-                    clearInterval(timerInterval);
-                    isRunning = false;
-                    document.getElementById('status').textContent = 'Out of time';
-                    document.getElementById('timerDisplay').classList.add('finished');
-                    document.getElementById('startBtn').textContent = 'Start';
-                    triggerFlash(300);
-                    playNotificationSound();
-                }
-            }, 1000);
         }
 
         function pauseTimer() {
-            if (!isRunning) return;
-            clearInterval(timerInterval);
-            isRunning = false;
-            isPaused = true;
-            document.getElementById('status').textContent = 'Paused';
-            document.getElementById('flashOverlay').style.animation = 'none';
-            document.getElementById('flashOverlay').style.opacity = '0';
+            if (isTimerActive) {
+                isPaused = true;
+                // REPLACE THIS AREA - Status message when timer is paused
+                document.getElementById('status').textContent = 'Paused';
+
+                const overlay = document.getElementById('flashOverlay');
+                overlay.style.animation = 'none';
+                overlay.style.opacity = '0';
+            }
         }
 
         function resetTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
+            console.log('RESET BUTTON PRESSED');
+            
+            isTimerActive = false;
             isPaused = false;
+            hasTriggered5MinWarning = false;
+            hasFinished = false;
             setTimerFromInputs();
             updateDisplay();
-            document.getElementById('status').textContent = 'A wild timer appeared!';
+            // REPLACE THIS AREA - Status message when timer is reset
+            document.getElementById('status').textContent = 'Ready';
             document.getElementById('timerDisplay').classList.remove('finished');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';
             document.getElementById('flashOverlay').style.opacity = '0';
+            document.title = "Star Wars Timer"; // Reset tab title
+            
             stopCurrentAudio();
+            console.log('Reset complete');
         }
 
         function triggerFlash(durationInSeconds) {
             const overlay = document.getElementById('flashOverlay');
             overlay.style.animation = 'flash 1s infinite';
             overlay.style.opacity = '1';
+
             setTimeout(() => {
                 overlay.style.animation = 'none';
                 overlay.style.opacity = '0';
@@ -402,45 +496,116 @@
 
         function toggleFullscreen() {
             const elem = document.documentElement;
+
             if (!document.fullscreenElement) {
-                elem.requestFullscreen?.() || elem.webkitRequestFullscreen?.() || elem.msRequestFullscreen?.();
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
             } else {
-                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
             }
         }
 
         function adjustFontSize() {
-            const text = document.getElementById('userText').value.length;
-            const size = text === 0 ? 1.5 : text < 20 ? 2.5 : text < 50 ? 2 : text < 100 ? 1.5 : 1.2;
-            document.getElementById('userText').style.fontSize = size + 'rem';
+            const textArea = document.getElementById('userText');
+            const text = textArea.value;
+            const textLength = text.length;
+
+            let fontSize;
+            
+            // Check if text contains line breaks (words separated by enters)
+            const hasLineBreaks = text.includes('\n');
+            const lines = text.split('\n');
+            const longestLineLength = Math.max(...lines.map(line => line.length));
+            
+            if (textLength === 0) {
+                fontSize = 1.5;
+            } else if (hasLineBreaks) {
+                // When there are line breaks, make text larger based on longest line
+                if (longestLineLength < 10) {
+                    fontSize = 3.5; // Very large for short words with breaks
+                } else if (longestLineLength < 15) {
+                    fontSize = 3;
+                } else if (longestLineLength < 25) {
+                    fontSize = 2.5;
+                } else if (longestLineLength < 35) {
+                    fontSize = 2;
+                } else {
+                    fontSize = 1.5;
+                }
+            } else {
+                // Original logic for text without line breaks
+                if (textLength < 20) {
+                    fontSize = 2.5;
+                } else if (textLength < 50) {
+                    fontSize = 2;
+                } else if (textLength < 100) {
+                    fontSize = 1.5;
+                } else {
+                    fontSize = 1.2;
+                }
+            }
+
+            textArea.style.fontSize = fontSize + 'rem';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // Set up all event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Page loaded, setting up event listeners');
+            
             updateDisplay();
+
+            // Add all button event listeners
             document.getElementById('startBtn').addEventListener('click', startTimer);
             document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
             document.getElementById('resetBtn').addEventListener('click', resetTimer);
             document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
             document.getElementById('soundBtn').addEventListener('click', toggleAudio);
-            ['hours', 'minutes', 'seconds'].forEach(id =>
-                document.getElementById(id).addEventListener('input', () => {
-                    if (!isRunning && !isPaused) setTimerFromInputs();
-                })
-            );
+
+            // Time input listeners
+            ['hours', 'minutes', 'seconds'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function () {
+                    if (!isTimerActive && !isPaused) {
+                        setTimerFromInputs();
+                    }
+                });
+            });
+
+            // Text area listeners
             const textArea = document.getElementById('userText');
             textArea.addEventListener('input', adjustFontSize);
             textArea.addEventListener('focus', adjustFontSize);
             adjustFontSize();
 
-            document.addEventListener('keydown', e => {
-                if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+
                 if (e.code === 'Space') {
                     e.preventDefault();
-                    isRunning ? pauseTimer() : startTimer();
+                    if (isTimerActive && !isPaused) {
+                        pauseTimer();
+                    } else {
+                        startTimer();
+                    }
                 } else if (e.code === 'Escape') {
                     resetTimer();
                 }
             });
+
+            console.log('All event listeners set up successfully');
         });
     </script>
 </body>
