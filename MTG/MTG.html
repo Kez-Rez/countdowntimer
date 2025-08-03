@@ -418,13 +418,13 @@
         function updateDisplay() {
             const timeString = formatTime(totalSeconds);
             document.getElementById('timerDisplay').textContent = timeString;
-            // Update the page title/tab with the countdown
+            // Update the page title/tab with the countdown // REPLACE THIS AREA - 3x tab areas below *
             if (isTimerActive && !isPaused && totalSeconds > 0) {
-                document.title = `${timeString} - Star Wars Timer`;
+                document.title = `${timeString} - MTG Timer`;
             } else if (totalSeconds <= 0 && hasFinished) {
-                document.title = "Time's Up! - Star Wars Timer";
+                document.title = "Time's Up! - MTG Timer";
             } else {
-                document.title = "Star Wars Timer";
+                document.title = "MTG Timer";
             }
         }
 
