@@ -12,7 +12,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(star_wars.png) no-repeat center center;
+             background: url(star_wars.png) no-repeat center center; /* REPLACE THIS AREA - Main background image */
             background-size: cover;
             color: white;
             zoom: calc(100vw / 1920 * 100%);
@@ -160,6 +160,7 @@
             margin: 20px 0;
             font-size: 1.2rem;
             font-weight: bold;
+            font-style: italic;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
         
@@ -214,7 +215,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url(deathstar.jpg);
+            background-image: url(deathstar.jpg); /* REPLACE THIS AREA - Flash overlay image for warnings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -243,7 +244,7 @@
 </head>
 <body>
     <div class="timer-container">
-        <h1>Star Wars Unlimited</h1>
+        <h1>Star Wars Unlimited</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
         
         <div class="text-area-section">
             <textarea id="userText"></textarea>
@@ -274,7 +275,7 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
-        <div class="status" id="status">Prepare for launch</div>
+        <div class="status" id="status">Prepare for launch</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
 
@@ -308,7 +309,7 @@
                 if (totalSeconds <= 0 && !hasFinished) {
                     hasFinished = true;
                     isTimerActive = false;
-                    document.getElementById('status').textContent = 'It\'s Bad Luck Ghorman';
+                    document.getElementById('status').textContent = 'It\'s Bad Luck Ghorman'; /* REPLACE THIS AREA - Timer finished status message */
                     document.getElementById('timerDisplay').classList.add('finished');
                     document.getElementById('startBtn').textContent = 'Start';
 
@@ -365,7 +366,7 @@
             console.log('Starting sound notification sequence');
             
             try {
-                const audio = new Audio('game-level-complete-143022.mp3'); // audio from https://pixabay.com/users/universfield-28281460/
+                const audio = new Audio('game-level-complete-143022.mp3'); // REPLACE THIS AREA - Sound file for timer completion
                 audio.volume = 0.8;
                 currentAudio = audio;
                 
@@ -441,21 +442,21 @@
             }
 
             if (totalSeconds <= 0) {
-                document.getElementById('status').textContent = 'Please set a time first!';
+                document.getElementById('status').textContent = 'Please set a time first!'; /* REPLACE THIS AREA - Error message when no time set */
                 return;
             }
 
             isTimerActive = true;
             isPaused = false;
             hasFinished = false;
-            document.getElementById('status').textContent = 'Countdown initiated';
+                    document.getElementById('status').textContent = 'Countdown initiated'; /* REPLACE THIS AREA - Timer running status message */
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
         function pauseTimer() {
             if (isTimerActive) {
                 isPaused = true;
-                document.getElementById('status').textContent = 'Holding position';
+                document.getElementById('status').textContent = 'Holding position'; /* REPLACE THIS AREA - Timer paused status message */
 
                 const overlay = document.getElementById('flashOverlay');
                 overlay.style.animation = 'none';
@@ -472,7 +473,7 @@
             hasFinished = false;
             setTimerFromInputs();
             updateDisplay();
-            document.getElementById('status').textContent = 'Prepare for launch';
+            document.getElementById('status').textContent = 'Prepare for launch'; /* REPLACE THIS AREA - Timer reset status message */
             document.getElementById('timerDisplay').classList.remove('finished');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';

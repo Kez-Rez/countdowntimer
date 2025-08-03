@@ -12,10 +12,10 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             /* REPLACE THIS AREA - Background image */
-             background: url(grookey.jpg) no-repeat center center fixed;
+             background: url(grookey.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
             background-size: cover;
-            color: white;
+            color: rgb(95, 44, 2);
+            zoom: calc(100vw / 1920 * 100%);
         }
         
         .timer-container {
@@ -35,7 +35,7 @@
             font-weight: bold;
             margin: 15px 0;
             font-family: 'Courier New', monospace;
-            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
+            text-shadow: 4px 4px 8px rgba(235, 134, 75, 0.9);
             width: 100%;
         }
         
@@ -62,7 +62,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9);
         }
         
         .text-area-section textarea::placeholder {
@@ -160,7 +160,8 @@
             margin: 20px 0;
             font-size: 1.2rem;
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            font-style: italic;
+            text-shadow: 4px 4px 8px rgba(235, 134, 75, 0.9);
         }
         
         .finished {
@@ -198,9 +199,9 @@
         
         h1 {
             font-size: 3rem;
-            margin-top: 15px;
+            margin-top: 7px;
             margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-shadow: 4px 4px 8px rgba(235, 134, 75, 0.9);
         }
         
         @keyframes pulse {
@@ -214,8 +215,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* REPLACE THIS AREA - Flash overlay image */
-            background-image: url(pokeball.jpg);
+            background-image: url(dpokeball.jpg); /* REPLACE THIS AREA - Flash overlay image for warnings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -229,12 +229,22 @@
             0%, 100% { opacity: 0; }
             50% { opacity: 0.8; }
         }
+
+        /* Responsive scaling for different resolutions */
+        @media screen and (max-width: 1920px) {
+            body { zoom: calc(100vw / 1920 * 100%); }
+        }
+        @media screen and (min-width: 1921px) and (max-width: 2560px) {
+            body { zoom: calc(100vw / 2560 * 133%); }
+        }
+        @media screen and (min-width: 2561px) {
+            body { zoom: calc(100vw / 3840 * 200%); }
+        }
     </style>
 </head>
 <body>
     <div class="timer-container">
-        <!-- REPLACE THIS AREA - Main heading text -->
-        <h1>Pokémon TCG</h1>
+        <h1>Pokémon TCG</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
         
         <div class="text-area-section">
             <textarea id="userText"></textarea>
@@ -265,10 +275,7 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
-        <div class="status" id="status">
-            <!-- REPLACE THIS AREA - Initial status text -->
-            A wild timer appeared!
-        </div>
+        <div class="status" id="status">A wild timer appeared!</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
 
@@ -302,8 +309,7 @@
                 if (totalSeconds <= 0 && !hasFinished) {
                     hasFinished = true;
                     isTimerActive = false;
-                    // REPLACE THIS AREA - Timer finished message
-                    document.getElementById('status').textContent = 'Out of time';
+                    document.getElementById('status').textContent = 'Out of time'; /* REPLACE THIS AREA - Timer finished status message */
                     document.getElementById('timerDisplay').classList.add('finished');
                     document.getElementById('startBtn').textContent = 'Start';
 
@@ -360,8 +366,7 @@
             console.log('Starting sound notification sequence');
             
             try {
-                // REPLACE THIS AREA - Sound file for timer completion
-                const audio = new Audio('game-level-complete-143022.mp3'); // audio from https://pixabay.com/users/universfield-28281460/
+                const audio = new Audio('game-level-complete-143022.mp3'); // REPLACE THIS AREA - Sound file for timer completion
                 audio.volume = 0.8;
                 currentAudio = audio;
                 
@@ -437,24 +442,21 @@
             }
 
             if (totalSeconds <= 0) {
-                // REPLACE THIS AREA - Error message when no time is set
-                document.getElementById('status').textContent = 'Please set a time first!';
+                document.getElementById('status').textContent = 'Please set a time first!'; /* REPLACE THIS AREA - Error message when no time set */
                 return;
             }
 
             isTimerActive = true;
             isPaused = false;
             hasFinished = false;
-            // REPLACE THIS AREA - Status message when timer starts
-            document.getElementById('status').textContent = 'Gotta catch them all!';
+                    document.getElementById('status').textContent = 'Gotta catch them all!'; /* REPLACE THIS AREA - Timer running status message */
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
         function pauseTimer() {
             if (isTimerActive) {
                 isPaused = true;
-                // REPLACE THIS AREA - Status message when timer is paused
-                document.getElementById('status').textContent = 'Paused';
+                document.getElementById('status').textContent = 'Paused'; /* REPLACE THIS AREA - Timer paused status message */
 
                 const overlay = document.getElementById('flashOverlay');
                 overlay.style.animation = 'none';
@@ -471,8 +473,7 @@
             hasFinished = false;
             setTimerFromInputs();
             updateDisplay();
-            // REPLACE THIS AREA - Status message when timer is reset
-            document.getElementById('status').textContent = 'Ready';
+            document.getElementById('status').textContent = 'Ready'; /* REPLACE THIS AREA - Timer reset status message */
             document.getElementById('timerDisplay').classList.remove('finished');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';

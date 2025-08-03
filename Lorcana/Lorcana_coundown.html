@@ -12,10 +12,10 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             /* REPLACE THIS AREA - Background image */
-             background: url(lorcana_timer.png) no-repeat center center fixed;
+             background: url(lorcana_timer.png) no-repeat center center; /* REPLACE THIS AREA - Main background image */
             background-size: cover;
             color: white;
+            zoom: calc(100vw / 1920 * 100%);
         }
         
         .timer-container {
@@ -160,6 +160,7 @@
             margin: 20px 0;
             font-size: 1.2rem;
             font-weight: bold;
+            font-style: italic;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
         }
         
@@ -198,7 +199,7 @@
         
         h1 {
             font-size: 3rem;
-            margin-top: 15px;
+            margin-top: 7px;
             margin-bottom: 30px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
@@ -214,8 +215,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* REPLACE THIS AREA - Flash overlay image */
-            background-image: url(late.png);
+            background-image: url(late.png); /* REPLACE THIS AREA - Flash overlay image for warnings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -229,12 +229,22 @@
             0%, 100% { opacity: 0; }
             50% { opacity: 0.8; }
         }
+
+        /* Responsive scaling for different resolutions */
+        @media screen and (max-width: 1920px) {
+            body { zoom: calc(100vw / 1920 * 100%); }
+        }
+        @media screen and (min-width: 1921px) and (max-width: 2560px) {
+            body { zoom: calc(100vw / 2560 * 133%); }
+        }
+        @media screen and (min-width: 2561px) {
+            body { zoom: calc(100vw / 3840 * 200%); }
+        }
     </style>
 </head>
 <body>
     <div class="timer-container">
-        <!-- REPLACE THIS AREA - Main heading text -->
-        <h1>Lorcana</h1>
+        <h1>Lorcana</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
         
         <div class="text-area-section">
             <textarea id="userText"></textarea>
@@ -265,10 +275,7 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
-        <div class="status" id="status">
-            <!-- REPLACE THIS AREA - Initial status text -->
-            Ready
-        </div>
+        <div class="status" id="status">Let the adventure begin!</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
 
@@ -302,8 +309,7 @@
                 if (totalSeconds <= 0 && !hasFinished) {
                     hasFinished = true;
                     isTimerActive = false;
-                    // REPLACE THIS AREA - Timer finished message
-                    document.getElementById('status').textContent = 'Out of time';
+                    document.getElementById('status').textContent = 'It is time.'; /* REPLACE THIS AREA - Timer finished status message */
                     document.getElementById('timerDisplay').classList.add('finished');
                     document.getElementById('startBtn').textContent = 'Start';
 
@@ -359,41 +365,36 @@
             
             console.log('Starting sound notification sequence');
             
-            try {
-                // REPLACE THIS AREA - Sound file for timer completion
-                const audio = new Audio('magic-colorsmp3-14899.mp3'); // audio from https://pixabay.com/
-                audio.volume = 0.8;
-                currentAudio = audio;
-                
-                let playCount = 0;
-                
-                function playSound() {
-                    if (!audioEnabled || !currentAudio) {
-                        console.log('Sound sequence stopped - audio disabled or cleared');
-                        return;
-                    }
-                    
-                    if (playCount < 3) {
-                        audio.currentTime = 0;
-                        console.log('Playing sound', playCount + 1, 'of 3');
-                        
-                        audio.play().then(() => {
-                            console.log(`Sound ${playCount + 1}/3 played successfully`);
-                            playCount++;
-                            
-                            if (playCount < 3 && audioEnabled && currentAudio) {
-                                console.log('Scheduling next sound in 3 seconds');
-                                const timeout = setTimeout(playSound, 2500);
-                                soundTimeouts.push(timeout);
-                            } else {
-                                console.log('Sound sequence complete');
-                                currentAudio = null;
-                            }
-                        }).catch(e => {
-                            console.log('Sound play failed:', e);
-                            currentAudio = null;
-                        });
-                    }
+            try { 
+    const audio = new Audio('magic-colorsmp3-14899.mp3'); // REPLACE THIS AREA - Sound file for timer completion
+    // audio from https://pixabay.com/
+    audio.volume = 0.8;
+    currentAudio = audio;
+
+    let playCount = 0;
+
+    function playSound() {
+        if (!audioEnabled || !currentAudio) {
+            console.log('Sound sequence stopped - audio disabled or cleared');
+            return;
+        }
+
+        if (playCount < 1) { // <-- Only allow 1 play
+            audio.currentTime = 0;
+            console.log('Playing sound once');
+
+            audio.play().then(() => {
+                console.log('Sound played successfully');
+                playCount++;
+                currentAudio = null; // clear after one play
+            }).catch(e => {
+                console.log('Sound play failed:', e);
+                currentAudio = null;
+            });
+        }
+    }
+}
+
                 }
                 
                 playSound();
@@ -437,24 +438,21 @@
             }
 
             if (totalSeconds <= 0) {
-                // REPLACE THIS AREA - Error message when no time is set
-                document.getElementById('status').textContent = 'Please set a time first!';
+                document.getElementById('status').textContent = 'Please set a time first!'; /* REPLACE THIS AREA - Error message when no time set */
                 return;
             }
 
             isTimerActive = true;
             isPaused = false;
             hasFinished = false;
-            // REPLACE THIS AREA - Status message when timer starts
-            document.getElementById('status').textContent = 'Even miracles take a little time';
+                    document.getElementById('status').textContent = 'Even miracles take a little time'; /* REPLACE THIS AREA - Timer running status message */
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
         function pauseTimer() {
             if (isTimerActive) {
                 isPaused = true;
-                // REPLACE THIS AREA - Status message when timer is paused
-                document.getElementById('status').textContent = 'Pause';
+                document.getElementById('status').textContent = 'Do you trust me?'; /* REPLACE THIS AREA - Timer paused status message */
 
                 const overlay = document.getElementById('flashOverlay');
                 overlay.style.animation = 'none';
@@ -471,8 +469,7 @@
             hasFinished = false;
             setTimerFromInputs();
             updateDisplay();
-            // REPLACE THIS AREA - Status message when timer is reset
-            document.getElementById('status').textContent = 'Be Prepared!';
+            document.getElementById('status').textContent = 'Let\’s get down to business!'; /* REPLACE THIS AREA - Timer reset status message */
             document.getElementById('timerDisplay').classList.remove('finished');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';
