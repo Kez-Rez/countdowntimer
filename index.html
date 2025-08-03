@@ -7,13 +7,27 @@
   <style>
     body {
       font-family: sans-serif;
-      background: linear-gradient(135deg, #771bda,#024f93, #f2ae39);
+      background: linear-gradient(135deg, #8B1538 0%, #6B1028 25%, #9B2948 50%, #7B1838 75%, #AB3958 100%),
+                  radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 50%);
+      background-size: 100% 100%, 200px 200px, 150px 150px;
       margin: 0;
+      min-height: 100vh;
+      padding: 2rem 0;
+      box-sizing: border-box;
+    }
+    
+    .main-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      max-width: 1000px;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     h1 {
@@ -37,6 +51,7 @@
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         text-decoration: none;
         color: #fff;
+        font-weight: bold;
         transition: transform 0.2s;
         }
 
@@ -47,22 +62,94 @@
 
 h1 {
   margin-bottom: 2rem;
-  color: #ff6f61; /* coral/red-orange */
+  color: #d49415; 
+}
+
+.about-section {
+  margin-top: 3rem;
+  max-width: 800px;
+  text-align: center;
+  background: rgba(5, 26, 131, 0.512);
+  backdrop-filter: blur(6px);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.about-section h2 {
+  color: #d49415;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.about-section p {
+  color: #fff;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.about-section ul {
+  color: #fff;
+  line-height: 1.6;
+  font-size: 1.1rem;
+  text-align: left;
+  max-width: 600px;
+  margin: 1rem auto;
+}
+
+.about-section li {
+  margin-bottom: 0.5rem;
+}
+
+.github-link {
+   color: #d49415;;
+  text-decoration: none;
+  font-weight: bold;
+  border-bottom: 2px solid transparent;
+  transition: border-bottom 0.3s;
+}
+
+.github-link:hover {
+  border-bottom: 2px solid #ff6f61;
 }
   </style>
 </head>
 <body>
-  <h1>TCG Countdown Timers</h1>
-  <div class="link-grid">
-    <a class="link-card" href="Lorcana/Lorcana_coundown.html">Lorcana</a>
-    <a class="link-card" href="Pokemon/pokemon_tcg_countdown.html">Pokemon TCG</a>
-    <a class="link-card" href="SWU/SWU_countdown.html">Star Wars Unlimited</a>
-    <a class="link-card" href="about.html">Coming Soon</a>
-    <a class="link-card" href="timer2.html">Coming Soon</a>
-    <a class="link-card" href="game1.html">Coming Soon</a>
-    <a class="link-card" href="about.html">Coming Soon</a>
-    <a class="link-card" href="game1.html">Coming Soon</a>
-    <a class="link-card" href="about.html">Coming Soon</a>
+  <div class="main-container">
+    <h1>TCG Countdown Timers</h1>
+    <div class="link-grid">
+      <a class="link-card" href="Lorcana/Lorcana_coundown.html">Lorcana</a>
+      <a class="link-card" href="MTG/MTG.html">Magic the Gathering</a>
+      <a class="link-card" href="Pokemon/pokemon_tcg_countdown.html">Pokemon TCG</a>
+      <a class="link-card" href="SWU/SWU_countdown.html">Star Wars Unlimited</a>
+      <a class="link-card" href="about.html">Coming Soon</a>
+      <a class="link-card" href="timer2.html">Coming Soon</a>
+    </div>
+    <h1>Other Countdown Timers</h1>
+    <div class="link-grid">
+      <a class="link-card" href="game1.html">Coming Soon</a>
+      <a class="link-card" href="about.html">Coming Soon</a>
+      <a class="link-card" href="game1.html">Coming Soon</a>
+      <a class="link-card" href="about.html">Coming Soon</a>
+      <a class="link-card" href="game1.html">Coming Soon</a>
+      <a class="link-card" href="about.html">Coming Soon</a>
+    </div>
+    
+    <div class="about-section">
+      <h2>Welcome!</h2>
+      <p>These are free-to-use countdown timers made to add an exciting flare to your game nights. 
+        <p>Each timer has a text box which can be used to post a variety of things to your players:</p>
+      <ul>
+        <li>Objectives</li>
+        <li>Future events</li>
+        <li>Sale announcements</li>
+        <li>Reminders</li>
+        <li>Conversation starters to get your players chatting</li>
+      </ul>
+      <p>I would love to hear if you are using these timers and where you are using them, and if you have any requests!
+</p>
+      <p><a href="https://github.com/Kez-Rez/countdowntimer/discussions/1" target="_blank" class="github-link">Have feedback or suggestions? Join the discussion on GitHub!</a></p>
+    </div>
   </div>
 </body>
 </html>

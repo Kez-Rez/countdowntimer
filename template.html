@@ -420,7 +420,7 @@
             document.getElementById('timerDisplay').textContent = timeString;
             // Update the page title/tab with the countdown
             if (isTimerActive && !isPaused && totalSeconds > 0) {
-                document.title = `${timeString} - Star Wars Timer`;
+                document.title = `${timeString} - Star Wars Timer`;/* REPLACE THIS AREA - chrome tab wording */
             } else if (totalSeconds <= 0 && hasFinished) {
                 document.title = "Time's Up! - Star Wars Timer";
             } else {
