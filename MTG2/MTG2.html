@@ -12,9 +12,9 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(grookey.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
+             background: url(swamp.png) no-repeat center center; /* REPLACE THIS AREA - Main background image */
             background-size: cover;
-            color: rgb(95, 44, 2);
+            color: white;
             zoom: calc(100vw / 1920 * 100%);
         }
         
@@ -35,7 +35,7 @@
             font-weight: bold;
             margin: 18px 0;
             font-family: 'Courier New', monospace;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+            text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
             width: 100%;
         }
         
@@ -62,7 +62,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
+            text-shadow: 2.4px 2.4px 4.8px rgba(0, 0, 0, 0.8);
         }
         
         .text-area-section textarea::placeholder {
@@ -161,7 +161,7 @@
             font-size: 1.44rem;
             font-weight: bold;
             font-style: italic;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+            text-shadow: 1.2px 1.2px 2.4px rgba(0, 0, 0, 0.6);
         }
         
         .finished {
@@ -201,7 +201,10 @@
             font-size: 3.6rem;
             margin-top: 8.4px;
             margin-bottom: 36px;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+            text-shadow: 2.4px 2.4px 4.8px rgba(0, 0, 0, 0.8);
+            color: #430990;
+            text-shadow: 4.8px 4.8px 9.6px rgba(224, 188, 253, 0.9);
+            
         }
         
         @keyframes pulse {
@@ -215,7 +218,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url(pokeball.jpg); /* REPLACE THIS AREA - Flash overlay image for warnings */
+            background-image: url(symbol.jpg); /* REPLACE THIS AREA - Flash overlay image for warnings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -244,7 +247,7 @@
 </head>
 <body>
     <div class="timer-container">
-        <h1>Pokémon TCG</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
+        <h1>Magic The Gathering</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
         
         <div class="text-area-section">
             <textarea id="userText"></textarea>
@@ -275,7 +278,7 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
-        <div class="status" id="status">A wild timer appeared!</div> <!-- REPLACE THIS AREA - Default status message -->
+        <div class="status" id="status">Ready</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
 
@@ -420,11 +423,11 @@
             document.getElementById('timerDisplay').textContent = timeString;
             // Update the page title/tab with the countdown // REPLACE THIS AREA - 3x tab areas below *
             if (isTimerActive && !isPaused && totalSeconds > 0) {
-                document.title = `${timeString} - Pokemon Timer`;
+                document.title = `${timeString} - MTG Timer`;
             } else if (totalSeconds <= 0 && hasFinished) {
-                document.title = "Time's Up! - Pokemon Timer";
+                document.title = "Time's Up! - MTG Timer";
             } else {
-                document.title = "Pokemon Timer";
+                document.title = "MTG Timer";
             }
         }
 
@@ -449,7 +452,7 @@
             isTimerActive = true;
             isPaused = false;
             hasFinished = false;
-                    document.getElementById('status').textContent = 'Gotta catch them all!'; /* REPLACE THIS AREA - Timer running status message */
+                    document.getElementById('status').textContent = 'Countdown in progress'; /* REPLACE THIS AREA - Timer running status message */
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
@@ -478,7 +481,7 @@
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';
             document.getElementById('flashOverlay').style.opacity = '0';
-            document.title = "Pokemon Timer"; // Reset tab title // REPLACE THIS AREA - tab *
+            document.title = "Star Wars Timer"; // Reset tab title
             
             stopCurrentAudio();
             console.log('Reset complete');

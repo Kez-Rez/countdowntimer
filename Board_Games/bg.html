@@ -12,22 +12,22 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(grookey.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
+             background: url(bg.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
             background-size: cover;
-            color: rgb(95, 44, 2);
+            color: white;
             zoom: calc(100vw / 1920 * 100%);
         }
         
         .timer-container {
             text-align: center;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0);
             padding: 18px 18px 18px 18px;
             border-radius: 14.4px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            min-width: 480px;
+            min-width: 700px;
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
         }
         
         .timer-display {
@@ -35,7 +35,7 @@
             font-weight: bold;
             margin: 18px 0;
             font-family: 'Courier New', monospace;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+            text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
             width: 100%;
         }
         
@@ -43,26 +43,48 @@
             margin: 18px 0;
         }
         
-        .text-area-section textarea {
+        .rich-text-editor {
             width: 100%;
-            height: 96px;
+            min-height: 140px;
+            height: 140px;
+            max-height: 640px;
             padding: 4.8px;
-            font-size: 1.8rem;
+            font-size: 2.5rem;
             font-family: 'Arial', sans-serif;
             border: none;
             border-radius: 7.2px;
             background: rgba(0, 0, 0, 0.6);
             color: #E8E8E8;
             backdrop-filter: blur(5px);
-            resize: vertical;
             box-sizing: border-box;
             text-align: center;
-            vertical-align: middle;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-weight: bold;
-            text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
+            text-shadow: 2.4px 2.4px 4.8px rgba(0, 0, 0, 0.8);
+            overflow-y: auto;
+            resize: vertical;
+        }
+        
+        .rich-text-editor:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .rich-text-editor:empty::before {
+            content: attr(data-placeholder);
+            color: rgba(232, 232, 232, 0.7);
+            pointer-events: none;
+        }
+        
+        .rich-text-editor .font-small {
+            font-size: 1.5rem;
+        }
+        
+        .rich-text-editor .font-medium {
+            font-size: 2.5rem;
+        }
+        
+        .rich-text-editor .font-large {
+            font-size: 4rem;
         }
         
         .text-area-section textarea::placeholder {
@@ -161,7 +183,8 @@
             font-size: 1.44rem;
             font-weight: bold;
             font-style: italic;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+            text-shadow: 1.2px 1.2px 2.4px rgba(0, 0, 0, 0.6);
+            width: 100%;
         }
         
         .finished {
@@ -197,12 +220,70 @@
             background: #FF8C00 !important;
         }
         
-        h1 {
-            font-size: 3.6rem;
-            margin-top: 8.4px;
-            margin-bottom: 36px;
-            text-shadow: 4.8px 4.8px 9.6px rgba(235, 134, 75, 0.9);
+        .text-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
         }
+        
+        .control-btn {
+            padding: 4.8px 8px;
+            font-size: 0.6rem;
+            border: none;
+            border-radius: 4.8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            background: #808080;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+            min-width: 24px;
+        }
+        
+        .control-btn:hover {
+            background: #404040;
+            transform: translateY(-1px);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .control-btn.active {
+            background: #404040;
+        }
+        
+        .color-picker {
+            width: 32px;
+            height: 25.6px;
+            border: none;
+            border-radius: 4.8px;
+            cursor: pointer;
+            background: none;
+        }
+        
+        .resize-handle {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0 0 7.2px 7.2px;
+            cursor: ns-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .resize-handle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .resize-handle::after {
+            content: '⋯';
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1rem;
+            transform: rotate(90deg);
+        }
+        
         
         @keyframes pulse {
             0% { opacity: 1; }
@@ -215,7 +296,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url(pokeball.jpg); /* REPLACE THIS AREA - Flash overlay image for warnings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -244,10 +324,19 @@
 </head>
 <body>
     <div class="timer-container">
-        <h1>Pokémon TCG</h1> <!-- REPLACE THIS AREA - Main heading/title text -->
-        
         <div class="text-area-section">
-            <textarea id="userText"></textarea>
+            <div class="text-controls">
+                <button class="control-btn" id="headingSpellCheck" title="Toggle Spell Check">Spell Check</button>
+                <button class="control-btn" id="boldBtn" title="Toggle Bold">Bold</button>
+                <button class="control-btn" id="italicBtn" title="Toggle Italic">Italic</button>
+                <button class="control-btn" id="underlineBtn" title="Toggle Underline">Underline</button>
+                <button class="control-btn" id="fontSizeSmall" title="Small Font">A-</button>
+                <button class="control-btn" id="fontSizeMedium" title="Medium Font">A</button>
+                <button class="control-btn" id="fontSizeLarge" title="Large Font">A+</button>
+                <input type="color" id="headingColorPicker" class="color-picker" value="#E8E8E8" title="Text Color">
+            </div>
+            <div id="headingText" contenteditable="true" spellcheck="true" class="rich-text-editor" data-placeholder="Enter your text here...">Enter your text here...</div>
+            <div class="resize-handle" id="resizeHandle"></div>
         </div>
         
         <div class="timer-display" id="timerDisplay">00:00:00</div>
@@ -275,7 +364,7 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
-        <div class="status" id="status">A wild timer appeared!</div> <!-- REPLACE THIS AREA - Default status message -->
+        <div class="status" id="status">Ready</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
 
@@ -420,11 +509,11 @@
             document.getElementById('timerDisplay').textContent = timeString;
             // Update the page title/tab with the countdown // REPLACE THIS AREA - 3x tab areas below *
             if (isTimerActive && !isPaused && totalSeconds > 0) {
-                document.title = `${timeString} - Pokemon Timer`;
+                document.title = `${timeString} -  Timer`;/* REPLACE THIS AREA - chrome tab wording */
             } else if (totalSeconds <= 0 && hasFinished) {
-                document.title = "Time's Up! - Pokemon Timer";
+                document.title = "Time's Up! -  Timer";
             } else {
-                document.title = "Pokemon Timer";
+                document.title = " Timer";
             }
         }
 
@@ -449,7 +538,7 @@
             isTimerActive = true;
             isPaused = false;
             hasFinished = false;
-                    document.getElementById('status').textContent = 'Gotta catch them all!'; /* REPLACE THIS AREA - Timer running status message */
+                    document.getElementById('status').textContent = 'Countdown in progress'; /* REPLACE THIS AREA - Timer running status message */
             document.getElementById('startBtn').textContent = 'Resume';
         }
 
@@ -478,7 +567,7 @@
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';
             document.getElementById('flashOverlay').style.opacity = '0';
-            document.title = "Pokemon Timer"; // Reset tab title // REPLACE THIS AREA - tab *
+            document.title = "Timer"; // Reset tab title // REPLACE THIS AREA - tab name *
             
             stopCurrentAudio();
             console.log('Reset complete');
@@ -486,6 +575,18 @@
 
         function triggerFlash(durationInSeconds) {
             const overlay = document.getElementById('flashOverlay');
+            
+            // Set different images based on the warning type
+            if (durationInSeconds === 5) {
+                // 5-minute warning - use 5-minute warning image (80% size)
+                overlay.style.backgroundImage = 'url(panic.png)'; /* REPLACE THIS AREA - Image for 5-minute warning */
+                overlay.style.backgroundSize = '80%';
+            } else {
+                // Timer finished - use time's up image
+                overlay.style.backgroundImage = 'url(TimesUp.png)'; /* REPLACE THIS AREA - Image for timer finished */
+                overlay.style.backgroundSize = 'cover';
+            }
+            
             overlay.style.animation = 'flash 1s infinite';
             overlay.style.opacity = '1';
 
@@ -517,48 +618,172 @@
             }
         }
 
-        function adjustFontSize() {
-            const textArea = document.getElementById('userText');
-            const text = textArea.value;
-            const textLength = text.length;
-
-            let fontSize;
+        function setupTextControls() {
+            // Setup elements
+            const headingSpellCheckBtn = document.getElementById('headingSpellCheck');
+            const boldBtn = document.getElementById('boldBtn');
+            const italicBtn = document.getElementById('italicBtn');
+            const underlineBtn = document.getElementById('underlineBtn');
+            const fontSizeSmall = document.getElementById('fontSizeSmall');
+            const fontSizeMedium = document.getElementById('fontSizeMedium');
+            const fontSizeLarge = document.getElementById('fontSizeLarge');
+            const headingEditor = document.getElementById('headingText');
+            const headingColorPicker = document.getElementById('headingColorPicker');
+            const resizeHandle = document.getElementById('resizeHandle');
             
-            // Check if text contains line breaks (words separated by enters)
-            const hasLineBreaks = text.includes('\n');
-            const lines = text.split('\n');
-            const longestLineLength = Math.max(...lines.map(line => line.length));
+            // Spell check toggle functionality - Fixed
+            headingSpellCheckBtn.addEventListener('click', function() {
+                const currentSpellCheck = headingEditor.getAttribute('spellcheck') === 'true';
+                headingEditor.setAttribute('spellcheck', !currentSpellCheck);
+                headingSpellCheckBtn.classList.toggle('active', !currentSpellCheck);
+                headingSpellCheckBtn.textContent = !currentSpellCheck ? 'Spell Check' : 'spell check';
+                headingSpellCheckBtn.title = !currentSpellCheck ? 'Disable Spell Check' : 'Enable Spell Check';
+                
+                // Force re-render of spell check
+                const content = headingEditor.innerHTML;
+                headingEditor.innerHTML = '';
+                headingEditor.innerHTML = content;
+            });
             
-            if (textLength === 0) {
-                fontSize = 1.8;
-            } else if (hasLineBreaks) {
-                // When there are line breaks, make text larger based on longest line
-                if (longestLineLength < 10) {
-                    fontSize = 4.2; // Very large for short words with breaks
-                } else if (longestLineLength < 15) {
-                    fontSize = 3.6;
-                } else if (longestLineLength < 25) {
-                    fontSize = 3;
-                } else if (longestLineLength < 35) {
-                    fontSize = 2.4;
+            // Text formatting functionality
+            boldBtn.addEventListener('click', function() {
+                document.execCommand('bold', false, null);
+                updateFormatButtons();
+            });
+            
+            italicBtn.addEventListener('click', function() {
+                document.execCommand('italic', false, null);
+                updateFormatButtons();
+            });
+            
+            underlineBtn.addEventListener('click', function() {
+                document.execCommand('underline', false, null);
+                updateFormatButtons();
+            });
+            
+            // Font size functionality
+            fontSizeSmall.addEventListener('click', function() {
+                applyFontSize('font-small');
+                updateFontSizeButtons('small');
+            });
+            
+            fontSizeMedium.addEventListener('click', function() {
+                applyFontSize('font-medium');
+                updateFontSizeButtons('medium');
+            });
+            
+            fontSizeLarge.addEventListener('click', function() {
+                applyFontSize('font-large');
+                updateFontSizeButtons('large');
+            });
+            
+            // Color picker functionality
+            headingColorPicker.addEventListener('input', function() {
+                document.execCommand('foreColor', false, this.value);
+            });
+            
+            // Update button states when selection changes
+            headingEditor.addEventListener('mouseup', updateFormatButtons);
+            headingEditor.addEventListener('keyup', updateFormatButtons);
+            
+            // Setup resize functionality
+            setupResizeHandle(resizeHandle, headingEditor);
+            
+            // Initialize button states
+            headingSpellCheckBtn.classList.add('active');
+            fontSizeMedium.classList.add('active');
+        }
+        
+        function applyFontSize(className) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (!range.collapsed) {
+                    // Text is selected - wrap it in a span with the font size class
+                    const span = document.createElement('span');
+                    span.className = className;
+                    try {
+                        range.surroundContents(span);
+                    } catch (e) {
+                        // If surroundContents fails, extract and wrap the contents
+                        const contents = range.extractContents();
+                        span.appendChild(contents);
+                        range.insertNode(span);
+                    }
+                    selection.removeAllRanges();
                 } else {
-                    fontSize = 1.8;
-                }
-            } else {
-                // Original logic for text without line breaks
-                if (textLength < 20) {
-                    fontSize = 3;
-                } else if (textLength < 50) {
-                    fontSize = 2.4;
-                } else if (textLength < 100) {
-                    fontSize = 1.8;
-                } else {
-                    fontSize = 1.44;
+                    // No text selected - set default font size for new text
+                    document.getElementById('headingText').style.fontSize = 
+                        className === 'font-small' ? '1.5rem' : 
+                        className === 'font-large' ? '4rem' : '2.5rem';
                 }
             }
-
-            textArea.style.fontSize = fontSize + 'rem';
         }
+        
+        function updateFormatButtons() {
+            const boldBtn = document.getElementById('boldBtn');
+            const italicBtn = document.getElementById('italicBtn');
+            const underlineBtn = document.getElementById('underlineBtn');
+            
+            // Update button states
+            const isBold = document.queryCommandState('bold');
+            const isItalic = document.queryCommandState('italic');
+            const isUnderline = document.queryCommandState('underline');
+            
+            boldBtn.classList.toggle('active', isBold);
+            italicBtn.classList.toggle('active', isItalic);
+            underlineBtn.classList.toggle('active', isUnderline);
+        }
+        
+        function updateFontSizeButtons(activeSize) {
+            const fontSizeSmall = document.getElementById('fontSizeSmall');
+            const fontSizeMedium = document.getElementById('fontSizeMedium');
+            const fontSizeLarge = document.getElementById('fontSizeLarge');
+            
+            // Remove active class from all font size buttons
+            [fontSizeSmall, fontSizeMedium, fontSizeLarge].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to selected button
+            if (activeSize === 'small') fontSizeSmall.classList.add('active');
+            else if (activeSize === 'large') fontSizeLarge.classList.add('active');
+            else fontSizeMedium.classList.add('active');
+        }
+        
+        function setupResizeHandle(handle, editor) {
+            let isResizing = false;
+            let startY = 0;
+            let startHeight = 0;
+            
+            handle.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = parseInt(getComputedStyle(editor).height, 10);
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                
+                const deltaY = e.clientY - startY;
+                const newHeight = startHeight + deltaY;
+                
+                // Set min and max height
+                if (newHeight >= 200 && newHeight <= 1000) {
+                    editor.style.height = newHeight + 'px';
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.userSelect = '';
+                }
+            });
+        }
+
 
         // Set up all event listeners when page loads
         document.addEventListener('DOMContentLoaded', function () {
@@ -582,26 +807,19 @@
                 });
             });
 
-            // Text area listeners
-            const textArea = document.getElementById('userText');
-            textArea.addEventListener('input', adjustFontSize);
-            textArea.addEventListener('focus', adjustFontSize);
-            adjustFontSize();
+            // Rich text editor setup
+            const richTextEditor = document.getElementById('headingText');
+
+            // Text control functionality
+            setupTextControls();
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function (e) {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') {
                     return;
                 }
 
-                if (e.code === 'Space') {
-                    e.preventDefault();
-                    if (isTimerActive && !isPaused) {
-                        pauseTimer();
-                    } else {
-                        startTimer();
-                    }
-                } else if (e.code === 'Escape') {
+                if (e.code === 'Escape') {
                     resetTimer();
                 }
             });
