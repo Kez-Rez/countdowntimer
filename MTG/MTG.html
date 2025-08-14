@@ -37,6 +37,9 @@
             font-family: 'Courier New', monospace;
             text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
             width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .text-area-section {
@@ -170,6 +173,12 @@
         
         .finished {
             animation: pulse 1s infinite;
+        }
+
+        .overtime {
+            color: #ff4444 !important;
+            animation: pulse 1s infinite;
+            font-size: 6.8rem !important;
         }
 
         .fullscreen-btn {
@@ -336,8 +345,13 @@
 
         // The main ticker function that runs every second
         function ticker() {
-            if (isTimerActive && !isPaused && totalSeconds > 0) {
-                totalSeconds--;
+            if (isTimerActive && !isPaused) {
+                if (totalSeconds > 0) {
+                    totalSeconds--;
+                } else {
+                    // In overtime - count backwards from 0
+                    totalSeconds--;
+                }
                 updateDisplay();
 
                 // Check for 5-minute warning
@@ -346,16 +360,21 @@
                     triggerFlash(5);
                 }
 
-                // Check if timer finished
-                if (totalSeconds <= 0 && !hasFinished) {
+                // Check if timer finished (reached 0)
+                if (totalSeconds === 0 && !hasFinished) {
                     hasFinished = true;
-                    isTimerActive = false;
-                    document.getElementById('status').textContent = 'Out of time'; /* REPLACE THIS AREA - Timer finished status message */
+                    document.getElementById('status').textContent = 'Out of time - OVERTIME!'; /* REPLACE THIS AREA - Timer finished status message */
                     document.getElementById('timerDisplay').classList.add('finished');
-                    document.getElementById('startBtn').textContent = 'Start';
+                    document.getElementById('timerDisplay').classList.add('overtime');
 
                     triggerFlash(300);
                     playNotificationSound();
+                }
+
+                // Update overtime styling
+                if (totalSeconds < 0) {
+                    document.getElementById('timerDisplay').classList.add('overtime');
+                    document.getElementById('status').textContent = 'OVERTIME!';
                 }
             }
         }
@@ -450,10 +469,13 @@
         }
 
         function formatTime(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const isNegative = seconds < 0;
+            const absSeconds = Math.abs(seconds);
+            const hours = Math.floor(absSeconds / 3600);
+            const minutes = Math.floor((absSeconds % 3600) / 60);
+            const secs = absSeconds % 60;
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            return isNegative ? `-${timeString}` : timeString;
         }
 
         function updateDisplay() {
@@ -462,7 +484,9 @@
             // Update the page title/tab with the countdown // REPLACE THIS AREA - 3x tab areas below *
             if (isTimerActive && !isPaused && totalSeconds > 0) {
                 document.title = `${timeString} - MTG Timer`;
-            } else if (totalSeconds <= 0 && hasFinished) {
+            } else if (totalSeconds < 0) {
+                document.title = `OVERTIME ${timeString} - MTG Timer`;
+            } else if (totalSeconds === 0 && hasFinished) {
                 document.title = "Time's Up! - MTG Timer";
             } else {
                 document.title = "MTG Timer";
@@ -516,10 +540,11 @@
             updateDisplay();
             document.getElementById('status').textContent = 'Ready'; /* REPLACE THIS AREA - Timer reset status message */
             document.getElementById('timerDisplay').classList.remove('finished');
+            document.getElementById('timerDisplay').classList.remove('overtime');
             document.getElementById('startBtn').textContent = 'Start';
             document.getElementById('flashOverlay').style.animation = 'none';
             document.getElementById('flashOverlay').style.opacity = '0';
-            document.title = "Star Wars Timer"; // Reset tab title
+            document.title = "MTG Timer"; // Reset tab title
             
             stopCurrentAudio();
             console.log('Reset complete');
