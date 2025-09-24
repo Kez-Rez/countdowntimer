@@ -34,13 +34,13 @@
         
         @media (min-width: 1921px) {
             body {
-                background-image: url(backgrounds/tarkir_background_4k.png);
+                background-image: url(backgrounds/tarkir_background_1920w.png);
             }
         }
         
         @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
             body {
-                background-image: url(backgrounds/tarkir_background_4k.png);
+                background-image: url(backgrounds/tarkir_background_1920w.png);
             }
         }
         
@@ -716,6 +716,21 @@
 
             console.log('All event listeners set up successfully');
         });
+
+        // Progressive loading for high-resolution backgrounds
+        function loadHighResBackground() {
+            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    document.body.style.backgroundImage = 'url(backgrounds/tarkir_background_4k.png)';
+                    console.log('4K background loaded');
+                };
+                highResImg.src = 'backgrounds/tarkir_background_4k.png';
+            }
+        }
+        
+        // Load high-res after page loads
+        window.addEventListener('load', loadHighResBackground);
     </script>
 </body>
 </html>
