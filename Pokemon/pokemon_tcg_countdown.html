@@ -12,10 +12,41 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(grookey.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
+            /* REPLACE THIS AREA - Mobile background (50-100KB, 480px wide) */
+            background: url(backgrounds/grookey_background_480w.png) no-repeat center center;
             background-size: cover;
             color: rgb(95, 44, 2);
             zoom: calc(100vw / 1920 * 100%);
+        }
+        
+        /* Responsive background images for different screen sizes */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                /* REPLACE THIS AREA - Tablet background (100-200KB, 768px wide) */
+                background-image: url(backgrounds/grookey_background_768w.png);
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1920px) {
+            body {
+                /* REPLACE THIS AREA - Desktop background (200-400KB, 1920px wide) */
+                background-image: url(backgrounds/grookey_background_1920w.png);
+            }
+        }
+        
+        @media (min-width: 1921px) {
+            body {
+                /* REPLACE THIS AREA - 4K background (500KB-1MB, 3840px wide) */
+                background-image: url(backgrounds/grookey_background_4k.png);
+            }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                /* REPLACE THIS AREA - High DPI background (uses 4K version) */
+                background-image: url(backgrounds/grookey_background_4k.png);
+            }
         }
         
         .timer-container {

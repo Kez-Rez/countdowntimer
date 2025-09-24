@@ -12,10 +12,36 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(tarkir.png) no-repeat center center; /* REPLACE THIS AREA - Main background image */
+            /* REPLACE THIS AREA - Mobile background (50-100KB, 480px wide) */
+            background: url(backgrounds/tarkir_background_480w.png) no-repeat center center;
             background-size: cover;
             color: white;
             zoom: calc(100vw / 1920 * 100%);
+        }
+        
+        /* Responsive background images for different screen sizes */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                background-image: url(backgrounds/tarkir_background_768w.png);
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1920px) {
+            body {
+                background-image: url(backgrounds/tarkir_background_1920w.png);
+            }
+        }
+        
+        @media (min-width: 1921px) {
+            body {
+                background-image: url(backgrounds/tarkir_background_4k.png);
+            }
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                background-image: url(backgrounds/tarkir_background_4k.png);
+            }
         }
         
         .timer-container {

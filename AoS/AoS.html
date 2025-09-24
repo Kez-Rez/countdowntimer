@@ -12,10 +12,41 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-             background: url(aos.jpg) no-repeat center center; /* REPLACE THIS AREA - Main background image */
+            /* REPLACE THIS AREA - Mobile background (50-100KB, 480px wide) */
+            background: url(backgrounds/AOS_background_480w.png) no-repeat center center;
             background-size: cover;
             color: white;
             zoom: calc(100vw / 1920 * 100%);
+        }
+        
+        /* Responsive background images for different screen sizes */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                /* REPLACE THIS AREA - Tablet background (100-200KB, 768px wide) */
+                background-image: url(backgrounds/AOS_background_768w.png);
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1920px) {
+            body {
+                /* REPLACE THIS AREA - Desktop background (200-400KB, 1920px wide) */
+                background-image: url(backgrounds/AOS_background_1920.png);
+            }
+        }
+        
+        @media (min-width: 1921px) {
+            body {
+                /* REPLACE THIS AREA - 4K background (500KB-1MB, 3840px wide) */
+                background-image: url(backgrounds/AOS_background_4k.png);
+            }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                /* REPLACE THIS AREA - High DPI background (uses 4K version) */
+                background-image: url(backgrounds/AOS_background_4k.png);
+            }
         }
         
         .timer-container {
@@ -243,6 +274,34 @@
             background: #404040;
         }
         
+        .warning-controls {
+            margin: 12px 0;
+        }
+        
+        .warning-btn {
+            padding: 6px 12px;
+            margin: 0 4px;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            background: #666666;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        
+        .warning-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .warning-btn.active {
+            background: #FF6600;
+        }
+        
         h1 {
             font-size: 3.6rem;
             margin-top: 8.4px;
@@ -325,6 +384,11 @@
     <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
 </div>
         
+        <div class="warning-controls">
+            <button class="warning-btn active" id="warning20Btn" title="Toggle 20min Warning">20min Warning: ON</button>
+            <button class="warning-btn active" id="warning5Btn" title="Toggle 5min Warning">5min Warning: ON</button>
+        </div>
+        
         <div class="status" id="status">Ready</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
@@ -338,6 +402,9 @@
         let currentAudio = null;
         let soundTimeouts = [];
         let hasTriggered5MinWarning = false;
+        let hasTriggered20MinWarning = false;
+        let warning20Enabled = true;
+        let warning5Enabled = true;
         let hasFinished = false;
 
         // Start the continuous ticker immediately
@@ -354,10 +421,16 @@
                 }
                 updateDisplay();
 
-                // Check for 5-minute warning
-                if (totalSeconds === 1200 && !hasTriggered5MinWarning) {
+                // Check for 20-minute warning (1200 seconds)
+                if (totalSeconds === 1200 && warning20Enabled && !hasTriggered20MinWarning) {
+                    hasTriggered20MinWarning = true;
+                    triggerFlash(5); // 5 second flash
+                }
+
+                // Check for 5-minute warning (300 seconds)  
+                if (totalSeconds === 300 && warning5Enabled && !hasTriggered5MinWarning) {
                     hasTriggered5MinWarning = true;
-                    triggerFlash(5);
+                    triggerFlash(5); // 5 second flash
                 }
 
                 // Check if timer finished (reached 0)
@@ -535,6 +608,7 @@
             isTimerActive = false;
             isPaused = false;
             hasTriggered5MinWarning = false;
+            hasTriggered20MinWarning = false;
             hasFinished = false;
             setTimerFromInputs();
             updateDisplay();
@@ -559,6 +633,22 @@
                 overlay.style.animation = 'none';
                 overlay.style.opacity = '0';
             }, durationInSeconds * 1000);
+        }
+
+        function toggle20MinWarning() {
+            warning20Enabled = !warning20Enabled;
+            const btn = document.getElementById('warning20Btn');
+            btn.classList.toggle('active', warning20Enabled);
+            btn.style.background = warning20Enabled ? '#FF6600' : '#666666';
+            btn.textContent = warning20Enabled ? '20min Warning: ON' : '20min Warning: OFF';
+        }
+
+        function toggle5MinWarning() {
+            warning5Enabled = !warning5Enabled;
+            const btn = document.getElementById('warning5Btn');
+            btn.classList.toggle('active', warning5Enabled);
+            btn.style.background = warning5Enabled ? '#FF6600' : '#666666';
+            btn.textContent = warning5Enabled ? '5min Warning: ON' : '5min Warning: OFF';
         }
 
         function toggleFullscreen() {
@@ -638,6 +728,8 @@
             document.getElementById('resetBtn').addEventListener('click', resetTimer);
             document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
             document.getElementById('soundBtn').addEventListener('click', toggleAudio);
+            document.getElementById('warning20Btn').addEventListener('click', toggle20MinWarning);
+            document.getElementById('warning5Btn').addEventListener('click', toggle5MinWarning);
 
             // Time input listeners
             ['hours', 'minutes', 'seconds'].forEach(id => {
