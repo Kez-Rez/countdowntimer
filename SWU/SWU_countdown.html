@@ -37,7 +37,7 @@
         @media (min-width: 1921px) {
             body {
                 /* REPLACE THIS AREA - 4K background (500KB-1MB, 3840px wide) */
-                background-image: url(backgrounds/star_wars_background_4k.png);
+                background-image: url(backgrounds/star_wars_background_1920w.png);
             }
         }
         
@@ -45,7 +45,7 @@
         @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
             body {
                 /* REPLACE THIS AREA - High DPI background (uses 4K version) */
-                background-image: url(backgrounds/star_wars_background_4k.png);
+                background-image: url(backgrounds/star_wars_background_1920w.png);
             }
         }
         
@@ -720,6 +720,21 @@
 
             console.log('All event listeners set up successfully');
         });
+
+        // Progressive loading for high-resolution backgrounds
+        function loadHighResBackground() {
+            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    document.body.style.backgroundImage = 'url(backgrounds/star_wars_background_4k.png)';
+                    console.log('4K background loaded');
+                };
+                highResImg.src = 'backgrounds/star_wars_background_4k.png';
+            }
+        }
+        
+        // Load high-res after page loads
+        window.addEventListener('load', loadHighResBackground);
     </script>
 </body>
 </html>
