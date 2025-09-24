@@ -62,7 +62,7 @@
         }
         
         .timer-display {
-            font-size: 7.56rem;
+            font-size: 9.07rem;
             font-weight: bold;
             margin: 18px 0;
             font-family: 'Courier New', monospace;
@@ -209,7 +209,7 @@
         .overtime {
             color: #ff4444 !important;
             animation: pulse 1s infinite;
-            font-size: 6.8rem !important;
+            font-size: 8.16rem !important;
         }
 
         .fullscreen-btn {
@@ -333,7 +333,7 @@
             <textarea id="userText" spellcheck="true"></textarea>
         </div>
         
-        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
         
         <div class="input-section">
             <div class="time-input">
@@ -504,10 +504,9 @@
         function formatTime(seconds) {
             const isNegative = seconds < 0;
             const absSeconds = Math.abs(seconds);
-            const hours = Math.floor(absSeconds / 3600);
-            const minutes = Math.floor((absSeconds % 3600) / 60);
+            const totalMinutes = Math.floor(absSeconds / 60);
             const secs = absSeconds % 60;
-            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const timeString = `${totalMinutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             return isNegative ? `-${timeString}` : timeString;
         }
 

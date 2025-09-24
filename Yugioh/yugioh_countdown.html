@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            /* REPLACE THIS AREA - Mobile/Default background */
+            background: url(backgrounds/yugioh_background_1920w.png) no-repeat center center;
+            background-size: cover;
+            color: white;
+            zoom: calc(100vw / 1920 * 100%);
+        }
+        
+        /* Responsive background images for different screen sizes */
+        @media (min-width: 769px) and (max-width: 1920px) {
+            body {
+                background-image: url(backgrounds/yugioh_background_1920w.png);
+            }
+        }
+        
+        @media (min-width: 1921px) {
+            body {
+                background-image: url(backgrounds/yugioh_background_1920w.png);
+            }
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                background-image: url(backgrounds/yugioh_background_1920w.png);
+            }
+        }
+        
+        .timer-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 18px 18px 18px 18px;
+            border-radius: 14.4px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            min-width: 480px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .timer-display {
+            font-size: 9.07rem;
+            font-weight: bold;
+            margin: 18px 0;
+            font-family: 'Courier New', monospace;
+            color: #ff1975;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8), 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .text-area-section {
+            margin: 0;
+        }
+        
+        .text-controls {
+            margin: -8px 0 2px 0;
+        }
+        
+        .text-area-section textarea {
+            width: 100%;
+            height: 96px;
+            padding: 4.8px;
+            font-size: 1.8rem;
+            font-family: 'Arial', sans-serif;
+            border: none;
+            border-radius: 7.2px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #E8E8E8;
+            backdrop-filter: blur(5px);
+            resize: vertical;
+            box-sizing: border-box;
+            text-align: center;
+            vertical-align: middle;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-shadow: 2.4px 2.4px 4.8px rgba(0, 0, 0, 0.8);
+        }
+        
+        .text-area-section textarea::placeholder {
+            color: rgba(232, 232, 232, 0.7);
+        }
+        
+        .text-area-section textarea:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .input-section {
+            margin: 18px 0;
+        }
+        
+        .time-input {
+            display: inline-block;
+            margin: 0 12px;
+        }
+        
+        .time-input input {
+            width: 72px;
+            padding: 12px;
+            font-size: 1.44rem;
+            text-align: center;
+            border: none;
+            border-radius: 9.6px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+        
+        .time-input input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .time-input label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1.08rem;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            margin: 36px 0;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        
+        .start-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .start-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+        }
+        
+        .pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .pause-btn:hover {
+            background: #e68900;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+        }
+        
+        .reset-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+        }
+        
+        .status {
+            margin: 24px 0;
+            font-size: 1.44rem;
+            font-weight: bold;
+            font-style: italic;
+            text-shadow: 1.2px 1.2px 2.4px rgba(0, 0, 0, 0.6);
+        }
+        
+        .finished {
+            animation: pulse 1s infinite;
+        }
+
+        .overtime {
+            color: #ff4444 !important;
+            animation: pulse 1s infinite;
+            font-size: 8.16rem !important;
+        }
+
+        .fullscreen-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            background: #2196F3;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .fullscreen-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        .sound-enabled {
+            background: #9C27B0 !important;
+        }
+
+        .sound-disabled {
+            background: #FF8C00 !important;
+        }
+        
+        .text-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 4.8px 8px;
+            font-size: 0.6rem;
+            border: none;
+            border-radius: 4.8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            background: #808080;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+            min-width: 24px;
+        }
+        
+        .control-btn:hover {
+            background: #404040;
+            transform: translateY(-1px);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+        }
+        
+        .control-btn.active {
+            background: #404040;
+        }
+        
+        h1 {
+            font-size: 3.6rem;
+            margin-top: 8.4px;
+            margin-bottom: 36px;
+            color: #ff1975;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8), 2.4px 2.4px 4.8px rgba(0, 0, 0, 0.8);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        #flashOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ff0000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            animation: none;
+        }
+
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Responsive scaling for different resolutions */
+        @media screen and (max-width: 1920px) {
+            body { zoom: calc(100vw / 1920 * 100%); }
+        }
+        @media screen and (min-width: 1921px) and (max-width: 2560px) {
+            body { zoom: calc(100vw / 2560 * 133%); }
+        }
+        @media screen and (min-width: 2561px) {
+            body { zoom: calc(100vw / 3840 * 200%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <h1>Yu-Gi-Oh!</h1>
+        
+        <div class="text-area-section">
+            <div class="text-controls">
+                <button class="control-btn" id="spellCheckToggle" title="Toggle Spell Check">Spell Check</button>
+            </div>
+            <textarea id="userText" spellcheck="true"></textarea>
+        </div>
+        
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        
+        <div class="input-section">
+            <div class="time-input">
+                <label>Hours</label>
+                <input type="number" id="hours" min="0" max="23" value="0" placeholder="0">
+            </div>
+            <div class="time-input">
+                <label>Minutes</label>
+                <input type="number" id="minutes" min="0" max="59" value="50" placeholder="50">
+            </div>
+            <div class="time-input">
+                <label>Seconds</label>
+                <input type="number" id="seconds" min="0" max="59" value="0" placeholder="0">
+            </div>
+        </div>
+        
+    <div class="controls">
+    <button class="start-btn" id="startBtn">Start</button>
+    <button class="pause-btn" id="pauseBtn">Pause</button>
+    <button class="reset-btn" id="resetBtn">Reset</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen">🔲</button>
+    <button class="fullscreen-btn sound-enabled" id="soundBtn" title="Sound Toggle">🔊</button>
+</div>
+        
+        <div class="status" id="status">Ready</div>
+    </div>
+    <div id="flashOverlay"></div>
+
+    <script>
+        // Global variables
+        let totalSeconds = 0;
+        let isTimerActive = false; // This controls whether the timer should count down
+        let isPaused = false;
+        let audioEnabled = true;
+        let currentAudio = null;
+        let soundTimeouts = [];
+        let hasTriggered5MinWarning = false;
+        let hasFinished = false;
+
+        // Start the continuous ticker immediately
+        const continuousInterval = setInterval(ticker, 1000);
+
+        // The main ticker function that runs every second
+        function ticker() {
+            if (isTimerActive && !isPaused) {
+                if (totalSeconds > 0) {
+                    totalSeconds--;
+                } else {
+                    // In overtime - count backwards from 0
+                    totalSeconds--;
+                }
+                updateDisplay();
+
+                // Check for 5-minute warning
+                if (totalSeconds === 300 && !hasTriggered5MinWarning) {
+                    hasTriggered5MinWarning = true;
+                    triggerFlash(5);
+                }
+
+                // Check if timer finished (reached 0)
+                if (totalSeconds === 0 && !hasFinished) {
+                    hasFinished = true;
+                    document.getElementById('status').textContent = 'Out of time - OVERTIME!';
+                    document.getElementById('timerDisplay').classList.add('finished');
+                    document.getElementById('timerDisplay').classList.add('overtime');
+
+                    triggerFlash(300);
+                    playNotificationSound();
+                }
+
+                // Update overtime styling
+                if (totalSeconds < 0) {
+                    document.getElementById('timerDisplay').classList.add('overtime');
+                    document.getElementById('status').textContent = 'OVERTIME!';
+                }
+            }
+        }
+
+        function toggleAudio() {
+            console.log('toggleAudio called, current state:', audioEnabled);
+            const soundBtn = document.getElementById('soundBtn');
+            
+            if (!audioEnabled) {
+                audioEnabled = true;
+                soundBtn.textContent = '🔊';
+                soundBtn.className = 'fullscreen-btn sound-enabled';
+                soundBtn.title = 'Disable Sound';
+                console.log('Audio ENABLED');
+            } else {
+                audioEnabled = false;
+                stopCurrentAudio();
+                soundBtn.textContent = '🔇';
+                soundBtn.className = 'fullscreen-btn sound-disabled';
+                soundBtn.title = 'Enable Sound';
+                console.log('Audio DISABLED');
+            }
+        }
+
+        function stopCurrentAudio() {
+            console.log('STOPPING ALL AUDIO - current audio exists:', !!currentAudio, 'timeouts count:', soundTimeouts.length);
+            
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                console.log('Audio stopped and cleared');
+            }
+            
+            soundTimeouts.forEach((timeout, index) => {
+                clearTimeout(timeout);
+                console.log('Cleared timeout', index);
+            });
+            soundTimeouts = [];
+            console.log('All timeouts cleared');
+        }
+
+        function playNotificationSound() {
+            if (!audioEnabled) {
+                console.log('Audio not enabled - no sound will play');
+                return;
+            }
+            
+            console.log('Starting sound notification sequence');
+            
+            try {
+                const audio = new Audio('game-level-complete-143022.mp3');
+                audio.volume = 0.8;
+                currentAudio = audio;
+                
+                let playCount = 0;
+                
+                function playSound() {
+                    if (!audioEnabled || !currentAudio) {
+                        console.log('Sound sequence stopped - audio disabled or cleared');
+                        return;
+                    }
+                    
+                    if (playCount < 3) {
+                        audio.currentTime = 0;
+                        console.log('Playing sound', playCount + 1, 'of 3');
+                        
+                        audio.play().then(() => {
+                            console.log(`Sound ${playCount + 1}/3 played successfully`);
+                            playCount++;
+                            
+                            if (playCount < 3 && audioEnabled && currentAudio) {
+                                console.log('Scheduling next sound in 3 seconds');
+                                const timeout = setTimeout(playSound, 2500);
+                                soundTimeouts.push(timeout);
+                            } else {
+                                console.log('Sound sequence complete');
+                                currentAudio = null;
+                            }
+                        }).catch(e => {
+                            console.log('Sound play failed:', e);
+                            currentAudio = null;
+                        });
+                    }
+                }
+                
+                playSound();
+                
+            } catch (e) {
+                console.log('Sound creation failed:', e);
+            }
+        }
+
+        function formatTime(seconds) {
+            const isNegative = seconds < 0;
+            const absSeconds = Math.abs(seconds);
+            const totalMinutes = Math.floor(absSeconds / 60);
+            const secs = absSeconds % 60;
+            const timeString = `${totalMinutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            return isNegative ? `-${timeString}` : timeString;
+        }
+
+        function updateDisplay() {
+            const timeString = formatTime(totalSeconds);
+            document.getElementById('timerDisplay').textContent = timeString;
+            // Update the page title/tab with the countdown
+            if (isTimerActive && !isPaused && totalSeconds > 0) {
+                document.title = `${timeString} - Yu-Gi-Oh Timer`;
+            } else if (totalSeconds < 0) {
+                document.title = `OVERTIME ${timeString} - Yu-Gi-Oh Timer`;
+            } else if (totalSeconds === 0 && hasFinished) {
+                document.title = "Time's Up! - Yu-Gi-Oh Timer";
+            } else {
+                document.title = "Yu-Gi-Oh Timer";
+            }
+        }
+
+        function setTimerFromInputs() {
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value) || 0;
+            totalSeconds = hours * 3600 + minutes * 60 + seconds;
+            updateDisplay();
+        }
+
+        function startTimer() {
+            if (!isTimerActive && !isPaused) {
+                setTimerFromInputs();
+            }
+
+            if (totalSeconds <= 0) {
+                document.getElementById('status').textContent = 'Please set a time first!';
+                return;
+            }
+
+            isTimerActive = true;
+            isPaused = false;
+            hasFinished = false;
+            document.getElementById('status').textContent = 'Countdown in progress';
+            document.getElementById('startBtn').textContent = 'Resume';
+        }
+
+        function pauseTimer() {
+            if (isTimerActive) {
+                isPaused = true;
+                document.getElementById('status').textContent = 'Paused';
+
+                const overlay = document.getElementById('flashOverlay');
+                overlay.style.animation = 'none';
+                overlay.style.opacity = '0';
+            }
+        }
+
+        function resetTimer() {
+            console.log('RESET BUTTON PRESSED');
+            
+            isTimerActive = false;
+            isPaused = false;
+            hasTriggered5MinWarning = false;
+            hasFinished = false;
+            setTimerFromInputs();
+            updateDisplay();
+            document.getElementById('status').textContent = 'Ready';
+            document.getElementById('timerDisplay').classList.remove('finished');
+            document.getElementById('timerDisplay').classList.remove('overtime');
+            document.getElementById('startBtn').textContent = 'Start';
+            document.getElementById('flashOverlay').style.animation = 'none';
+            document.getElementById('flashOverlay').style.opacity = '0';
+            document.title = "Yu-Gi-Oh Timer"; // Reset tab title
+            
+            stopCurrentAudio();
+            console.log('Reset complete');
+        }
+
+        function triggerFlash(durationInSeconds) {
+            const overlay = document.getElementById('flashOverlay');
+            overlay.style.animation = 'flash 1s infinite';
+            overlay.style.opacity = '1';
+
+            setTimeout(() => {
+                overlay.style.animation = 'none';
+                overlay.style.opacity = '0';
+            }, durationInSeconds * 1000);
+        }
+
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        function adjustFontSize() {
+            const textArea = document.getElementById('userText');
+            const text = textArea.value;
+            const textLength = text.length;
+
+            let fontSize;
+            
+            // Check if text contains line breaks (words separated by enters)
+            const hasLineBreaks = text.includes('\n');
+            const lines = text.split('\n');
+            const longestLineLength = Math.max(...lines.map(line => line.length));
+            
+            if (textLength === 0) {
+                fontSize = 1.8;
+            } else if (hasLineBreaks) {
+                // When there are line breaks, make text larger based on longest line
+                if (longestLineLength < 10) {
+                    fontSize = 4.2; // Very large for short words with breaks
+                } else if (longestLineLength < 15) {
+                    fontSize = 3.6;
+                } else if (longestLineLength < 25) {
+                    fontSize = 3;
+                } else if (longestLineLength < 35) {
+                    fontSize = 2.4;
+                } else {
+                    fontSize = 1.8;
+                }
+            } else {
+                // Original logic for text without line breaks
+                if (textLength < 20) {
+                    fontSize = 3;
+                } else if (textLength < 50) {
+                    fontSize = 2.4;
+                } else if (textLength < 100) {
+                    fontSize = 1.8;
+                } else {
+                    fontSize = 1.44;
+                }
+            }
+
+            textArea.style.fontSize = fontSize + 'rem';
+        }
+
+        // Set up all event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Page loaded, setting up event listeners');
+            
+            updateDisplay();
+
+            // Add all button event listeners
+            document.getElementById('startBtn').addEventListener('click', startTimer);
+            document.getElementById('pauseBtn').addEventListener('click', pauseTimer);
+            document.getElementById('resetBtn').addEventListener('click', resetTimer);
+            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+            document.getElementById('soundBtn').addEventListener('click', toggleAudio);
+
+            // Time input listeners
+            ['hours', 'minutes', 'seconds'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function () {
+                    if (!isTimerActive && !isPaused) {
+                        setTimerFromInputs();
+                    }
+                });
+            });
+
+            // Text area listeners
+            const textArea = document.getElementById('userText');
+            textArea.addEventListener('input', adjustFontSize);
+            textArea.addEventListener('focus', adjustFontSize);
+            adjustFontSize();
+            
+            // Spell check toggle listener
+            const spellCheckToggle = document.getElementById('spellCheckToggle');
+            
+            if (spellCheckToggle) {
+                spellCheckToggle.addEventListener('click', function() {
+                    const currentSpellCheck = textArea.getAttribute('spellcheck') === 'true';
+                    textArea.setAttribute('spellcheck', !currentSpellCheck);
+                    spellCheckToggle.classList.toggle('active', !currentSpellCheck);
+                    spellCheckToggle.textContent = !currentSpellCheck ? 'Spell Check' : 'spell check';
+                    spellCheckToggle.title = !currentSpellCheck ? 'Disable Spell Check' : 'Enable Spell Check';
+                });
+                
+                // Initialize spell check toggle state
+                spellCheckToggle.classList.add('active');
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (isTimerActive && !isPaused) {
+                        pauseTimer();
+                    } else {
+                        startTimer();
+                    }
+                } else if (e.code === 'Escape') {
+                    resetTimer();
+                }
+            });
+
+            console.log('All event listeners set up successfully');
+        });
+
+        // Progressive loading for high-resolution backgrounds
+        function loadHighResBackground() {
+            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    document.body.style.backgroundImage = 'url(backgrounds/yugioh_background_4k.png)';
+                    console.log('4K background loaded');
+                };
+                highResImg.src = 'backgrounds/yugioh_background_4k.png';
+            }
+        }
+        
+        // Load high-res after page loads
+        window.addEventListener('load', loadHighResBackground);
+    </script>
+</body>
+</html>
