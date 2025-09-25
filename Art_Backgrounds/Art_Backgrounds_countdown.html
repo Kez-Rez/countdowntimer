@@ -62,9 +62,9 @@
         }
         
         .timer-display {
-            font-size: 7.56rem;
+            font-size: 9.07rem;
             font-weight: bold;
-            margin: 18px 0;
+            margin: 12px 0;
             font-family: 'Courier New', monospace;
             text-shadow: 4.8px 4.8px 9.6px rgba(0, 0, 0, 0.9);
             width: 100%;
@@ -131,7 +131,7 @@
         }
         
         .input-section {
-            margin: 18px 0;
+            margin: 6px 0;
         }
         
         .time-input {
@@ -163,7 +163,7 @@
         }
         
         .controls {
-            margin: 36px 0;
+            margin: 12px 0;
         }
         
         button {
@@ -261,7 +261,7 @@
         }
         
         .warning-controls {
-            margin: 12px 0;
+            margin: 6px 0;
         }
         
         .warning-btn {
@@ -289,7 +289,7 @@
         }
         
         .background-selector {
-            margin: 12px 0;
+            margin: 6px 0;
         }
         
         .background-selector select {
@@ -435,7 +435,7 @@
             <div class="resize-handle" id="resizeHandle"></div>
         </div>
         
-        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
         
         <div class="input-section">
             <div class="time-input">
@@ -468,24 +468,49 @@
         <div class="background-selector">
             <label for="backgroundSelect">Background:</label>
             <select id="backgroundSelect">
-                <option value="great-wave-off-kanagawa-katsushika-hokusai-1833-25047ac6.jpg">Great Wave off Kanagawa - Hokusai</option>
-                <option value="Fine Wind, Clear Morning (Red Fuji) -  Katsushika Hokusai.jpg">Red Fuji - Hokusai</option>
-                <option value="The_Sea_at_Les_Saintes-Maries-de-la-Mer_Vincent_Van_Gogh.jpg">The Sea at Les Saintes-Maries-de-la-Mer - Van Gogh</option>
-                <option value="landscape-at-saint-remy-enclosed-field-with-peasant-vincent-van-gogh-1889-e0de449e.jpg">Landscape at Saint-Rémy - Van Gogh</option>
-                <option value="Tulip_Fields_near_The_Hague_Claude_Monet.jpg">Tulip Fields near The Hague - Monet</option>
-                <option value="the-artist-s-garden-at-eragny-camille-pissarro-1898-27bb56b5.jpg">The Artist's Garden at Eragny - Pissarro</option>
+                <!-- Camille Pissarro -->
                 <option value="peasant-house-at-eragny-camille-pissarro-dc5fcc0b.jpg">Peasant House at Eragny - Pissarro</option>
+                <option value="the-artist-s-garden-at-eragny-camille-pissarro-1898-27bb56b5.jpg">The Artist's Garden at Eragny - Pissarro</option>
+                
+                <!-- Childe Hassam -->
                 <option value="poppies-isles-of-shoals-childe-hassam-1891-8b2a05b3.jpg">Poppies, Isles of Shoals - Hassam</option>
-                <option value="dahlias-hannah-borger-overbeck-1915-2ddf37cf.jpg">Dahlias - Hannah Borger Overbeck</option>
-                <option value="modern-rome-campo-vaccino-joseph-mallord-william-turner-1839-478f6cef.jpg">Modern Rome - Turner</option>
-                <option value="_Shade_and_Darkness_-_the_Evening_of_the_Deluge_-_N00531_-_National_Gallery - Joseph_Mallord_William_Turner_(1775-1851)_- (1).jpg">Shade and Darkness - Turner</option>
+                
+                <!-- Claude Joseph Vernet -->
                 <option value="A_Mountain_Landscape_With_An_Approaching_Storm_by_Claude-Joseph_Vernet.jpg">Mountain Landscape with Approaching Storm - Vernet</option>
                 <option value="Seaport_by_Moonlight_-Vernet,_Claude_Joseph_-__1771.jpg">Seaport by Moonlight - Vernet</option>
-                <option value="italian-landscape-with-umbrella-pines-hendrik-voogd-1807-8040093e.jpg">Italian Landscape with Umbrella Pines - Voogd</option>
-                <option value="mountain-stream-in-the-auvergne-theodore-rousseau-1830-0e625ae7.jpg">Mountain Stream in the Auvergne - Rousseau</option>
-                <option value="the-stream-le-ruisseau-du-puits-noir-vallee-de-la-loue-gustave-courbet-1855-8c921256.jpg">The Stream - Courbet</option>
+                
+                <!-- Claude Monet -->
+                <option value="Tulip_Fields_near_The_Hague_Claude_Monet.jpg">Tulip Fields near The Hague - Monet</option>
+                
+                <!-- Edvard Munch -->
+                <option value="Solen_av_Edvard_Munch.jpg">The Sun - Munch</option>
+                
+                <!-- Giovanni Paolo Panini -->
                 <option value="ancient-rome-giovanni-paolo-panini-1757-cd144dbe.jpg">Ancient Rome - Panini</option>
-                <option value="Solen_av_Edvard_Munch.jpg">The Sun - Edvard Munch</option>
+                
+                <!-- Gustave Courbet -->
+                <option value="the-stream-le-ruisseau-du-puits-noir-vallee-de-la-loue-gustave-courbet-1855-8c921256.jpg">The Stream - Courbet</option>
+                
+                <!-- Hannah Borger Overbeck -->
+                <option value="dahlias-hannah-borger-overbeck-1915-2ddf37cf.jpg">Dahlias - Overbeck</option>
+                
+                <!-- Hendrik Voogd -->
+                <option value="italian-landscape-with-umbrella-pines-hendrik-voogd-1807-8040093e.jpg">Italian Landscape with Umbrella Pines - Voogd</option>
+                
+                <!-- Joseph Mallord William Turner -->
+                <option value="modern-rome-campo-vaccino-joseph-mallord-william-turner-1839-478f6cef.jpg">Modern Rome - Turner</option>
+                <option value="_Shade_and_Darkness_-_the_Evening_of_the_Deluge_-_N00531_-_National_Gallery - Joseph_Mallord_William_Turner_(1775-1851)_- (1).jpg">Shade and Darkness - Turner</option>
+                
+                <!-- Katsushika Hokusai -->
+                <option value="Fine Wind, Clear Morning (Red Fuji) -  Katsushika Hokusai.jpg">Red Fuji - Hokusai</option>
+                <option value="great-wave-off-kanagawa-katsushika-hokusai-1833-25047ac6.jpg">Great Wave off Kanagawa - Hokusai</option>
+                
+                <!-- Theodore Rousseau -->
+                <option value="mountain-stream-in-the-auvergne-theodore-rousseau-1830-0e625ae7.jpg">Mountain Stream in the Auvergne - Rousseau</option>
+                
+                <!-- Vincent van Gogh -->
+                <option value="landscape-at-saint-remy-enclosed-field-with-peasant-vincent-van-gogh-1889-e0de449e.jpg">Landscape at Saint-Rémy - Van Gogh</option>
+                <option value="The_Sea_at_Les_Saintes-Maries-de-la-Mer_Vincent_Van_Gogh.jpg">The Sea at Les Saintes-Maries-de-la-Mer - Van Gogh</option>
             </select>
         </div>
         
@@ -645,10 +670,9 @@
         function formatTime(seconds) {
             const isNegative = seconds < 0;
             const absSeconds = Math.abs(seconds);
-            const hours = Math.floor(absSeconds / 3600);
-            const minutes = Math.floor((absSeconds % 3600) / 60);
+            const totalMinutes = Math.floor(absSeconds / 60);
             const secs = absSeconds % 60;
-            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            const timeString = `${totalMinutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             return isNegative ? `-${timeString}` : timeString;
         }
 
