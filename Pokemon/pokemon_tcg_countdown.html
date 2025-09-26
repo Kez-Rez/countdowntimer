@@ -19,35 +19,7 @@
             zoom: calc(100vw / 1920 * 100%);
         }
         
-        /* Responsive background images for different screen sizes */
-        @media (min-width: 481px) and (max-width: 768px) {
-            body {
-                /* REPLACE THIS AREA - Tablet background (100-200KB, 768px wide) */
-                background-image: url(backgrounds/grookey_background_768w.png);
-            }
-        }
-        
-        @media (min-width: 769px) and (max-width: 1920px) {
-            body {
-                /* REPLACE THIS AREA - Desktop background (200-400KB, 1920px wide) */
-                background-image: url(backgrounds/grookey_background_1920w.png);
-            }
-        }
-        
-        @media (min-width: 1921px) {
-            body {
-                /* REPLACE THIS AREA - Desktop background (loads 1920w, 4K loaded via JavaScript) */
-                background-image: url(backgrounds/grookey_background_1920w.png);
-            }
-        }
-        
-        /* High DPI displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            body {
-                /* REPLACE THIS AREA - High DPI background (loads 1920w, 4K loaded via JavaScript) */
-                background-image: url(backgrounds/grookey_background_1920w.png);
-            }
-        }
+        /* All screen sizes start with 480w for fast loading - JavaScript will upgrade */
         
         .timer-container {
             text-align: center;
@@ -719,23 +691,46 @@
 
             console.log('All event listeners set up successfully');
         });
+        
+        // Progressive background loading function
+        function progressiveLoadBackground() {
+            const screenWidth = window.innerWidth;
+            const pixelRatio = window.devicePixelRatio || 1;
+            const isHighDPI = pixelRatio > 1.5;
+            
+            let targetImage = '';
+            
+            // Determine which image to load based on screen size
+            if (screenWidth >= 1921 || isHighDPI) {
+                targetImage = 'backgrounds/grookey_background_4k.png';
+            } else if (screenWidth >= 769) {
+                targetImage = 'backgrounds/grookey_background_1920w.png';
+            } else if (screenWidth >= 481) {
+                targetImage = 'backgrounds/grookey_background_768w.png';
+            } else {
+                // Already using 480w, no need to change
+                return;
+            }
+            
+            // Preload the target image
+            const img = new Image();
+            img.onload = function() {
+                document.body.style.backgroundImage = `url(${targetImage})`;
+                console.log(`Progressive loading: ${targetImage} loaded`);
+            };
+            img.onerror = function() {
+                console.log(`Progressive loading: Failed to load ${targetImage}`);
+            };
+            img.src = targetImage;
+        }
+        
+        // Start progressive loading after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', progressiveLoadBackground);
+        } else {
+            progressiveLoadBackground();
+        }
     </script>
     
-    <script>
-        // Progressive loading for high-resolution backgrounds
-        function loadHighResBackground() {
-            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
-                const highResImg = new Image();
-                highResImg.onload = function() {
-                    document.body.style.backgroundImage = 'url(backgrounds/grookey_background_4k.png)';
-                    console.log('4K background loaded');
-                };
-                highResImg.src = 'backgrounds/grookey_background_4k.png';
-            }
-        }
-
-        // Load high-res after page loads
-        window.addEventListener('load', loadHighResBackground);
-    </script>
 </body>
 </html>

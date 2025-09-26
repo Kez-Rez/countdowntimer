@@ -19,35 +19,7 @@
             zoom: calc(100vw / 1920 * 100%);
         }
         
-        /* Responsive background images for different screen sizes */
-        @media (min-width: 481px) and (max-width: 768px) {
-            body {
-                /* REPLACE THIS AREA - Tablet background (100-200KB, 768px wide) */
-                background-image: url(backgrounds/swamp_background_768w.png);
-            }
-        }
-        
-        @media (min-width: 769px) and (max-width: 1920px) {
-            body {
-                /* REPLACE THIS AREA - Desktop background (200-400KB, 1920px wide) */
-                background-image: url(backgrounds/swamp_background_1920w.png);
-            }
-        }
-        
-        @media (min-width: 1921px) {
-            body {
-                /* REPLACE THIS AREA - Desktop background (loads 1920w, 4K loaded via JavaScript) */
-                background-image: url(backgrounds/swamp_background_1920w.png);
-            }
-        }
-        
-        /* High DPI displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            body {
-                /* REPLACE THIS AREA - High DPI background (loads 1920w, 4K loaded via JavaScript) */
-                background-image: url(backgrounds/swamp_background_1920w.png);
-            }
-        }
+        /* All screen sizes start with 480w for fast loading - JavaScript will upgrade */
         
         .timer-container {
             text-align: center;
@@ -721,24 +693,49 @@
             });
 
             console.log('All event listeners set up successfully');
+            
+            // Progressive background loading - start immediately
+            progressiveLoadBackground();
         });
     </script>
     
     <script>
-        // Progressive loading for high-resolution backgrounds
-        function loadHighResBackground() {
-            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
+        // Progressive loading for seamless high-resolution backgrounds
+        function progressiveLoadBackground() {
+            // Determine target image based on screen size and pixel ratio
+            let targetImage = '';
+            
+            if (window.innerWidth <= 480) {
+                targetImage = 'backgrounds/swamp_background_480w.png';
+            } else if (window.innerWidth <= 768) {
+                targetImage = 'backgrounds/swamp_background_768w.png';
+            } else if (window.innerWidth <= 1920 && window.devicePixelRatio <= 1.5) {
+                targetImage = 'backgrounds/swamp_background_1920w.png';
+            } else {
+                // High resolution screens or large displays get 4K
+                targetImage = 'backgrounds/swamp_background_4k.png';
+            }
+            
+            // Only load higher resolution if it's different from current
+            const currentBg = getComputedStyle(document.body).backgroundImage;
+            const currentUrl = currentBg.match(/url\("?([^"]*?)"?\)/);
+            const currentPath = currentUrl ? currentUrl[1] : '';
+            
+            if (!currentPath.includes(targetImage)) {
+                console.log(`Loading higher resolution background: ${targetImage}`);
+                
                 const highResImg = new Image();
                 highResImg.onload = function() {
-                    document.body.style.backgroundImage = 'url(backgrounds/swamp_background_4k.png)';
-                    console.log('4K background loaded');
+                    // Seamlessly switch to high-res once loaded
+                    document.body.style.backgroundImage = `url(${targetImage})`;
+                    console.log(`High resolution background loaded: ${targetImage}`);
                 };
-                highResImg.src = 'backgrounds/swamp_background_4k.png';
+                highResImg.onerror = function() {
+                    console.log(`Failed to load: ${targetImage}`);
+                };
+                highResImg.src = targetImage;
             }
         }
-
-        // Load high-res after page loads
-        window.addEventListener('load', loadHighResBackground);
     </script>
 </body>
 </html>

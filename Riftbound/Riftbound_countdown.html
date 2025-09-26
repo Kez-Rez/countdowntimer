@@ -19,35 +19,7 @@
             zoom: calc(100vw / 1920 * 100%);
         }
         
-        /* Responsive background images for different screen sizes */
-        @media (min-width: 481px) and (max-width: 768px) {
-            body {
-                /* REPLACE THIS AREA - Tablet background (100-200KB, 768px wide) */
-                background-image: url(backgrounds/riftbound_background_768w.png);
-            }
-        }
-        
-        @media (min-width: 769px) and (max-width: 1920px) {
-            body {
-                /* REPLACE THIS AREA - Desktop background (200-400KB, 1920px wide) */
-                background-image: url(backgrounds/riftbound_background_1920w.png);
-            }
-        }
-        
-        @media (min-width: 1921px) {
-            body {
-                /* REPLACE THIS AREA - 4K background (500KB-1MB, 3840px wide) */
-                background-image: url(backgrounds/riftbound_background_1920w.png);
-            }
-        }
-        
-        /* High DPI displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            body {
-                /* REPLACE THIS AREA - High DPI background (uses 4K version) */
-                background-image: url(backgrounds/riftbound_background_1920w.png);
-            }
-        }
+        /* All screen sizes start with 480w for fast loading - JavaScript will upgrade */
         
         .timer-container {
             text-align: center;
@@ -715,22 +687,46 @@
             });
 
             console.log('All event listeners set up successfully');
+            
+            // Start progressive loading after DOM is ready
+            progressiveLoadBackground();
         });
 
-        // Progressive loading for high-resolution backgrounds
-        function loadHighResBackground() {
-            if (window.innerWidth > 1920 || window.devicePixelRatio > 1.5) {
-                const highResImg = new Image();
-                highResImg.onload = function() {
-                    document.body.style.backgroundImage = 'url(backgrounds/riftbound_background_4k.png)';
-                    console.log('4K background loaded');
-                };
-                highResImg.src = 'backgrounds/riftbound_background_4k.png';
+        // Progressive background loading for optimal performance
+        function progressiveLoadBackground() {
+            const screenWidth = window.innerWidth;
+            const pixelRatio = window.devicePixelRatio || 1;
+            const isHighDPI = pixelRatio > 1.5;
+            
+            let targetImage = '';
+            
+            // Determine which background to load based on screen size and DPI
+            if (isHighDPI || screenWidth > 1920) {
+                targetImage = 'backgrounds/riftbound_background_4k.png';
+                console.log('Loading 4K background for high DPI or large screen');
+            } else if (screenWidth > 768) {
+                targetImage = 'backgrounds/riftbound_background_1920w.png';
+                console.log('Loading 1920w background for desktop');
+            } else if (screenWidth > 480) {
+                targetImage = 'backgrounds/riftbound_background_768w.png';
+                console.log('Loading 768w background for tablet');
+            } else {
+                // Keep the 480w image that's already loaded
+                console.log('Keeping 480w background for mobile');
+                return;
             }
+            
+            // Preload the target image
+            const img = new Image();
+            img.onload = function() {
+                document.body.style.backgroundImage = `url(${targetImage})`;
+                console.log(`Successfully loaded: ${targetImage}`);
+            };
+            img.onerror = function() {
+                console.log(`Failed to load: ${targetImage}, keeping current background`);
+            };
+            img.src = targetImage;
         }
-        
-        // Load high-res after page loads
-        window.addEventListener('load', loadHighResBackground);
     </script>
 </body>
 </html>
