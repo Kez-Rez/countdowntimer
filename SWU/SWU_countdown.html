@@ -41,13 +41,7 @@
             }
         }
         
-        /* High DPI displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            body {
-                /* REPLACE THIS AREA - High DPI background (uses 4K version) */
-                background-image: url(backgrounds/star_wars_background_4k.png);
-            }
-        }
+        /* High DPI displays - removed to let JavaScript handle progressive loading */
         
         .timer-container {
             text-align: center;
@@ -718,7 +712,47 @@
             });
 
             console.log('All event listeners set up successfully');
+            
+            // Progressive background loading - start immediately
+            progressiveLoadBackground();
         });
+
+        // Progressive loading for seamless high-resolution backgrounds
+        function progressiveLoadBackground() {
+            // Determine target image based on screen size and pixel ratio
+            let targetImage = '';
+            
+            if (window.innerWidth <= 480) {
+                targetImage = 'backgrounds/star_wars_background_480w.png';
+            } else if (window.innerWidth <= 768) {
+                targetImage = 'backgrounds/star_wars_background_768w.png';
+            } else if (window.innerWidth <= 1920 && window.devicePixelRatio <= 1.5) {
+                targetImage = 'backgrounds/star_wars_background_1920w.png';
+            } else {
+                // High resolution screens or large displays get 4K
+                targetImage = 'backgrounds/star_wars_background_4k.png';
+            }
+            
+            // Only load higher resolution if it's different from current
+            const currentBg = getComputedStyle(document.body).backgroundImage;
+            const currentUrl = currentBg.match(/url\("?([^"]*)"?\)/);
+            const currentPath = currentUrl ? currentUrl[1] : '';
+            
+            if (!currentPath.includes(targetImage)) {
+                console.log(`Loading higher resolution background: ${targetImage}`);
+                
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    // Seamlessly switch to high-res once loaded
+                    document.body.style.backgroundImage = `url(${targetImage})`;
+                    console.log(`High resolution background loaded: ${targetImage}`);
+                };
+                highResImg.onerror = function() {
+                    console.log(`Failed to load: ${targetImage}`);
+                };
+                highResImg.src = targetImage;
+            }
+        }
 
     </script>
 </body>
