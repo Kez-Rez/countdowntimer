@@ -690,45 +690,46 @@
             });
 
             console.log('All event listeners set up successfully');
+            
+            // Progressive background loading - start immediately
+            progressiveLoadBackground();
         });
         
-        // Progressive background loading function
+        // Progressive loading for seamless high-resolution backgrounds
         function progressiveLoadBackground() {
-            const screenWidth = window.innerWidth;
-            const pixelRatio = window.devicePixelRatio || 1;
-            const isHighDPI = pixelRatio > 1.5;
-            
+            // Determine target image based on screen size and pixel ratio
             let targetImage = '';
             
-            // Determine which image to load based on screen size
-            if (screenWidth >= 1921 || isHighDPI) {
-                targetImage = 'backgrounds/grookey_background_4k.png';
-            } else if (screenWidth >= 769) {
-                targetImage = 'backgrounds/grookey_background_1920w.png';
-            } else if (screenWidth >= 481) {
+            if (window.innerWidth <= 480) {
+                targetImage = 'backgrounds/grookey_background_480w.png';
+            } else if (window.innerWidth <= 768) {
                 targetImage = 'backgrounds/grookey_background_768w.png';
+            } else if (window.innerWidth <= 1920 && window.devicePixelRatio <= 1.5) {
+                targetImage = 'backgrounds/grookey_background_1920w.png';
             } else {
-                // Already using 480w, no need to change
-                return;
+                // High resolution screens or large displays get 4K
+                targetImage = 'backgrounds/grookey_background_4k.png';
             }
             
-            // Preload the target image
-            const img = new Image();
-            img.onload = function() {
-                document.body.style.backgroundImage = `url(${targetImage})`;
-                console.log(`Progressive loading: ${targetImage} loaded`);
-            };
-            img.onerror = function() {
-                console.log(`Progressive loading: Failed to load ${targetImage}`);
-            };
-            img.src = targetImage;
-        }
-        
-        // Start progressive loading after DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', progressiveLoadBackground);
-        } else {
-            progressiveLoadBackground();
+            // Only load higher resolution if it's different from current
+            const currentBg = getComputedStyle(document.body).backgroundImage;
+            const currentUrl = currentBg.match(/url\("?([^"]*)"?\)/);
+            const currentPath = currentUrl ? currentUrl[1] : '';
+            
+            if (!currentPath.includes(targetImage)) {
+                console.log(`Loading higher resolution background: ${targetImage}`);
+                
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    // Seamlessly switch to high-res once loaded
+                    document.body.style.backgroundImage = `url(${targetImage})`;
+                    console.log(`High resolution background loaded: ${targetImage}`);
+                };
+                highResImg.onerror = function() {
+                    console.log(`Failed to load: ${targetImage}`);
+                };
+                highResImg.src = targetImage;
+            }
         }
     </script>
     

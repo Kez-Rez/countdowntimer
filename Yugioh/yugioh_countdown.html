@@ -13,7 +13,7 @@
             min-height: 100vh;
             margin: 0;
             /* REPLACE THIS AREA - Mobile/Default background */
-            background: url(backgrounds/yugioh_background_1920w.png) no-repeat center center;
+            background: url(backgrounds/yugioh_background_480w.png) no-repeat center center;
             background-size: cover;
             color: white;
             zoom: calc(100vw / 1920 * 100%);
@@ -690,39 +690,45 @@
 
             console.log('All event listeners set up successfully');
             
-            // Start progressive background loading
+            // Progressive background loading - start immediately
             progressiveLoadBackground();
         });
 
-        // Progressive loading for responsive backgrounds
+        // Progressive loading for seamless high-resolution backgrounds
         function progressiveLoadBackground() {
-            const width = window.innerWidth;
-            const pixelRatio = window.devicePixelRatio || 1;
+            // Determine target image based on screen size and pixel ratio
+            let targetImage = '';
             
-            console.log(`Screen width: ${width}px, pixel ratio: ${pixelRatio}`);
-            
-            // Determine which background to load based on screen size and pixel density
-            let targetBackground = 'backgrounds/yugioh_background_1920w.png'; // Default
-            
-            if (width > 1920 || pixelRatio > 1.5) {
-                targetBackground = 'backgrounds/yugioh_background_4k.png';
-                console.log('Loading 4K background for high resolution display');
+            if (window.innerWidth <= 480) {
+                targetImage = 'backgrounds/yugioh_background_480w.png';
+            } else if (window.innerWidth <= 768) {
+                targetImage = 'backgrounds/yugioh_background_768w.png';
+            } else if (window.innerWidth <= 1920 && window.devicePixelRatio <= 1.5) {
+                targetImage = 'backgrounds/yugioh_background_1920w.png';
             } else {
-                console.log('Using 1920w background (already loaded)');
-                return; // Already loaded the right image
+                // High resolution screens or large displays get 4K
+                targetImage = 'backgrounds/yugioh_background_4k.png';
             }
             
-            // Preload the target image
-            const img = new Image();
-            img.onload = function() {
-                document.body.style.backgroundImage = `url(${targetBackground})`;
-                console.log(`Background upgraded to: ${targetBackground}`);
-            };
-            img.onerror = function() {
-                console.warn(`Failed to load background: ${targetBackground}`);
-            };
+            // Only load higher resolution if it's different from current
+            const currentBg = getComputedStyle(document.body).backgroundImage;
+            const currentUrl = currentBg.match(/url\("?([^"]*?)"?\)/);
+            const currentPath = currentUrl ? currentUrl[1] : '';
             
-            img.src = targetBackground;
+            if (!currentPath.includes(targetImage)) {
+                console.log(`Loading higher resolution background: ${targetImage}`);
+                
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    // Seamlessly switch to high-res once loaded
+                    document.body.style.backgroundImage = `url(${targetImage})`;
+                    console.log(`High resolution background loaded: ${targetImage}`);
+                };
+                highResImg.onerror = function() {
+                    console.log(`Failed to load: ${targetImage}`);
+                };
+                highResImg.src = targetImage;
+            }
         }
     </script>
 </body>

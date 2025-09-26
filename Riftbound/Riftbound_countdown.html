@@ -692,40 +692,41 @@
             progressiveLoadBackground();
         });
 
-        // Progressive background loading for optimal performance
+        // Progressive loading for seamless high-resolution backgrounds
         function progressiveLoadBackground() {
-            const screenWidth = window.innerWidth;
-            const pixelRatio = window.devicePixelRatio || 1;
-            const isHighDPI = pixelRatio > 1.5;
-            
+            // Determine target image based on screen size and pixel ratio
             let targetImage = '';
             
-            // Determine which background to load based on screen size and DPI
-            if (isHighDPI || screenWidth > 1920) {
-                targetImage = 'backgrounds/riftbound_background_4k.png';
-                console.log('Loading 4K background for high DPI or large screen');
-            } else if (screenWidth > 768) {
-                targetImage = 'backgrounds/riftbound_background_1920w.png';
-                console.log('Loading 1920w background for desktop');
-            } else if (screenWidth > 480) {
+            if (window.innerWidth <= 480) {
+                targetImage = 'backgrounds/riftbound_background_480w.png';
+            } else if (window.innerWidth <= 768) {
                 targetImage = 'backgrounds/riftbound_background_768w.png';
-                console.log('Loading 768w background for tablet');
+            } else if (window.innerWidth <= 1920 && window.devicePixelRatio <= 1.5) {
+                targetImage = 'backgrounds/riftbound_background_1920w.png';
             } else {
-                // Keep the 480w image that's already loaded
-                console.log('Keeping 480w background for mobile');
-                return;
+                // High resolution screens or large displays get 4K
+                targetImage = 'backgrounds/riftbound_background_4k.png';
             }
             
-            // Preload the target image
-            const img = new Image();
-            img.onload = function() {
-                document.body.style.backgroundImage = `url(${targetImage})`;
-                console.log(`Successfully loaded: ${targetImage}`);
-            };
-            img.onerror = function() {
-                console.log(`Failed to load: ${targetImage}, keeping current background`);
-            };
-            img.src = targetImage;
+            // Only load higher resolution if it's different from current
+            const currentBg = getComputedStyle(document.body).backgroundImage;
+            const currentUrl = currentBg.match(/url\("?([^"]*)"?\)/);
+            const currentPath = currentUrl ? currentUrl[1] : '';
+            
+            if (!currentPath.includes(targetImage)) {
+                console.log(`Loading higher resolution background: ${targetImage}`);
+                
+                const highResImg = new Image();
+                highResImg.onload = function() {
+                    // Seamlessly switch to high-res once loaded
+                    document.body.style.backgroundImage = `url(${targetImage})`;
+                    console.log(`High resolution background loaded: ${targetImage}`);
+                };
+                highResImg.onerror = function() {
+                    console.log(`Failed to load: ${targetImage}`);
+                };
+                highResImg.src = targetImage;
+            }
         }
     </script>
 </body>
