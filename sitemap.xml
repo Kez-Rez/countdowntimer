@@ -1,98 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  
-  <!-- Main page -->
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- TCG Timers -->
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/Lorcana/Lorcana_coundown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/MTG/MTG_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/MTG2/MTG2_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/Pokemon/pokemon_tcg_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <url>
-    <loc>https://kez-rez.github.io/countdowntimer/SWU/SWU_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://kez-rez.github.io/countdowntimer/Yugioh/yugioh_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/Riftbound/Riftbound_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kez-rez.github.io/countdowntimer/SWU/SWU_countdown.html</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- Other Timers -->
+  <url>
+    <loc>https://kez-rez.github.io/countdowntimer/Yugioh/yugioh_countdown.html</loc>
+    <lastmod>2025-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/40k/40k_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/AoS/AoS_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/Bloodbowl/Blood_bowl_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
-  
   <url>
     <loc>https://kez-rez.github.io/countdowntimer/Board_Games/boardgame_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
+    <lastmod>2025-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kez-rez.github.io/countdowntimer/Art_Backgrounds/Art_Backgrounds_countdown.html</loc>
+    <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  
-  <url>
-    <loc>https://kez-rez.github.io/countdowntimer/Art_Backgrounds/Art_Backgrounds_countdown.html</loc>
-    <lastmod>2025-01-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
 </urlset>
