@@ -21,6 +21,28 @@
         
         /* All screen sizes start with 480w for fast loading - JavaScript will upgrade */
         
+        .loading-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .loading-indicator.show {
+            opacity: 1;
+        }
+        
         /* High DPI displays - removed to let JavaScript handle progressive loading */
         
         .timer-container {
@@ -332,6 +354,7 @@
         <div class="status" id="status">Prepare for launch</div> <!-- REPLACE THIS AREA - Default status message -->
     </div>
     <div id="flashOverlay"></div>
+    <div id="loadingIndicator" class="loading-indicator">Loading HD background...</div>
 
     <script>
         // Global variables
@@ -721,14 +744,24 @@
             if (!currentPath.includes(targetImage)) {
                 console.log(`Loading higher resolution background: ${targetImage}`);
                 
+                // Show loading indicator
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                loadingIndicator.classList.add('show');
+                
                 const highResImg = new Image();
                 highResImg.onload = function() {
                     // Seamlessly switch to high-res once loaded
                     document.body.style.backgroundImage = `url(${targetImage})`;
                     console.log(`High resolution background loaded: ${targetImage}`);
+                    
+                    // Hide loading indicator
+                    loadingIndicator.classList.remove('show');
                 };
                 highResImg.onerror = function() {
                     console.log(`Failed to load: ${targetImage}`);
+                    
+                    // Hide loading indicator on error
+                    loadingIndicator.classList.remove('show');
                 };
                 highResImg.src = targetImage;
             }
