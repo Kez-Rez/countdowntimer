@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Allow all pages to be crawled
+Allow: /index.html
+Allow: /Lorcana/
+Allow: /MTG/
+Allow: /MTG2/
+Allow: /Pokemon/
+Allow: /SWU/
+Allow: /Yugioh/
+Allow: /Riftbound/
+Allow: /40k/
+Allow: /AoS/
+Allow: /Bloodbowl/
+Allow: /Board_Games/
+Allow: /Art_Backgrounds/
+
+# Sitemap location (will be available once GitHub Pages is enabled)
+Sitemap: https://kez-rez.github.io/countdowntimer/sitemap.xml
