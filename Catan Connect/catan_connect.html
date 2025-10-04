@@ -481,7 +481,7 @@
         app.innerHTML = `
           <div class="modal-overlay">
             <div class="bg-gray-800 p-8 rounded-lg text-white text-center max-w-md">
-              <h2 class="text-2xl font-bold mb-4">View Statistics</h2>
+              <h2 class="text-2xl font-bold mb-4">View Settings & Statistics</h2>
               <p class="mb-6">Would you like to pause the game?</p>
               <div class="flex gap-4 justify-center">
                 <button onclick="handleStatsChoice(true)" class="px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 font-bold">
@@ -803,6 +803,7 @@
               <!-- Image -->
               <div class="bg-gray-800 p-6 rounded-lg text-centre">
                 <img src="Catan_Connect_Front_v1.png" alt="Catan Connect" class="w-full max-w-md mx-auto rounded-lg shadow-lg" onerror="this.style.display='none'">
+                <img src="Catan_Connect_Back_v1.png" alt="Catan Connect" class="w-full max-w-md mx-auto rounded-lg shadow-lg" onerror="this.style.display='none'">
               </div>
               
               <!-- Teaching Script -->
@@ -941,6 +942,15 @@
             </div>
 
             <button onclick="handleStart()" class="px-12 py-6 bg-white text-4xl font-bold text-orange-700 rounded-lg hover:bg-gray-100">START GAME</button>
+
+<p>Game saves to last state, to start fresh click new game in the cog below
+            <p>
+              
+             <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl px-6 font-bold text-orange-700 bg-black py-1 rounded-lg hover:text-gray-300"> Settings ⚙️</button>
+              
+              
+              </p>
+
           </div>
         `;
         return;
