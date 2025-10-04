@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <title>Catan Connect</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="../menu.js"></script>
   <style>
     html, body { height:100%; margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
     
@@ -14,7 +13,7 @@
       --color-dice-number: #ffffff;
       --color-sun-active: #ffffff;
       --color-moon-active: #ffffff;
-      --color-robber-label: #fca5a5; /* pink/red-300 */
+      --color-robber-label: #ffffff;
       --color-robber-number: #ffffff;
       --color-timer: #ffffff;
       --color-round-number: #ffffff;
@@ -31,35 +30,32 @@
     
     /* Background images */
     .bg-sun {
-      /* Replace image here - Sun/Orange background */
-      background-image: url('https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=1920');
+      /* Sun/Orange background - burnt orange */
+      background: linear-gradient(135deg, #cc5500 0%, #ff6600 50%, #cc5500 100%);
       background-size: cover;
       background-position: center;
     }
     
     .bg-moon {
-      /* Replace image here - Moon/Blue background */
-      background-image: url('https://images.unsplash.com/photo-1532693322450-2cb5c511067d?w=1920');
+      /* Moon/Blue background - navy blue */
+      background: linear-gradient(135deg, #001f3f 0%, #003366 50%, #001f3f 100%);
       background-size: cover;
       background-position: center;
     }
     
     .bg-flash {
-      /* Replace image here - Flash warning image */
-      background-image: url('https://images.unsplash.com/photo-1564094807355-e77c8d0eb19e?w=1920');
-      background-size: cover;
-      background-position: center;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
+      /* Not used - text flashes instead */
+      display: none;
     }
     
-    .bg-flash.active {
-      opacity: 1;
+    .flash-red {
+      color: #ff0000 !important;
+      transition: color 0.3s ease-in-out;
     }
     
     .bg-warning {
-      /* Replace image here - Robber warning background */
-      background-image: url('https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=1920');
+      /* Robber warning background - forest green */
+      background: linear-gradient(135deg, #0d4d0d 0%, #1a661a 50%, #0d4d0d 100%);
       background-size: cover;
       background-position: center;
     }
@@ -128,14 +124,15 @@
       countdownPhase: false,
       countdownValue: 3,
       showStats: false,
-      roundLog: [], // {round, dice, robber, timestamp}
+      roundLog: [], // {round, dice, robber, duration}
       currentCountdownInterval: null,
       showPauseModal: false,
       // Settings
       vibrationEnabled: true,
       flashSpeed: 600,
       robberStartRound: 11,
-      currentView: 'stats' // 'stats', 'settings', 'info', 'advanced'
+      currentView: 'stats', // 'stats', 'settings', 'info', 'advanced'
+      roundStartTime: null
     };
 
     let intervalTimer = null;
@@ -209,12 +206,14 @@
 
     // Log a round
     function logRound(dice, robber) {
+      const duration = state.roundStartTime ? Math.round((Date.now() - state.roundStartTime) / 1000) : state.roundTime;
       state.roundLog.push({
         round: state.round,
         dice: dice,
         robber: robber,
-        timestamp: new Date().toLocaleTimeString()
+        duration: duration
       });
+      state.roundStartTime = Date.now();
     }
 
     // Start a new round
@@ -225,6 +224,10 @@
         newDice = getRandomNumber(false); // Allow 7s
         if (newDice === 7) {
           state.robberNumber = rollDice();
+          // Handle desert case
+          if (state.robberNumber === 7) {
+            state.robberNumber = 'DESERT (7)';
+          }
           logRound(newDice, state.robberNumber);
         } else {
           state.robberNumber = null;
@@ -236,7 +239,14 @@
         logRound(newDice, null);
       }
       state.diceNumber = newDice;
-      state.timeLeft = state.roundTime;
+      
+      // Increase round time by 10 seconds from round 11 onwards
+      if (state.round >= 11) {
+        state.timeLeft = state.roundTime + 10;
+      } else {
+        state.timeLeft = state.roundTime;
+      }
+      
       state.showWarning = false;
       saveState();
       render();
@@ -258,19 +268,31 @@
           }
         }, 1000);
 
-        // Flash background with fade effect when <= 5 seconds
+        // Flash text red when <= 5 seconds
         intervalFlash = setInterval(() => {
           const shouldFlash = (state.timeLeft <= 5 && state.timeLeft > 0 && !state.isPaused && !state.countdownPhase && !state.showWarning);
-          const flashOverlay = document.getElementById('flash-overlay');
-          if (flashOverlay && shouldFlash) {
+          if (shouldFlash) {
             flashState = !flashState;
+            const diceNum = document.querySelector('.dice-number');
+            const timer = document.querySelector('.timer-text');
+            const activeLabel = document.querySelector('.active-label');
+            
             if (flashState) {
-              flashOverlay.classList.add('active');
+              if (diceNum) diceNum.classList.add('flash-red');
+              if (timer) timer.classList.add('flash-red');
+              if (activeLabel) activeLabel.classList.add('flash-red');
             } else {
-              flashOverlay.classList.remove('active');
+              if (diceNum) diceNum.classList.remove('flash-red');
+              if (timer) timer.classList.remove('flash-red');
+              if (activeLabel) activeLabel.classList.remove('flash-red');
             }
-          } else if (flashOverlay) {
-            flashOverlay.classList.remove('active');
+          } else {
+            const diceNum = document.querySelector('.dice-number');
+            const timer = document.querySelector('.timer-text');
+            const activeLabel = document.querySelector('.active-label');
+            if (diceNum) diceNum.classList.remove('flash-red');
+            if (timer) timer.classList.remove('flash-red');
+            if (activeLabel) activeLabel.classList.remove('flash-red');
           }
         }, state.flashSpeed);
       }
@@ -279,8 +301,12 @@
     function stopTimerAndFlash() {
       if (intervalTimer) { clearInterval(intervalTimer); intervalTimer = null; }
       if (intervalFlash) { clearInterval(intervalFlash); intervalFlash = null; }
-      const flashOverlay = document.getElementById('flash-overlay');
-      if (flashOverlay) flashOverlay.classList.remove('active');
+      const diceNum = document.querySelector('.dice-number');
+      const timer = document.querySelector('.timer-text');
+      const activeLabel = document.querySelector('.active-label');
+      if (diceNum) diceNum.classList.remove('flash-red');
+      if (timer) timer.classList.remove('flash-red');
+      if (activeLabel) activeLabel.classList.remove('flash-red');
       flashState = false;
     }
 
@@ -309,12 +335,7 @@
           if (state.robberNumber === null && state.round === 11) {
             state.showWarning = true;
             render();
-            setTimeout(() => {
-              state.showWarning = false;
-              startNewRound();
-              state.isPaused = false;
-              startTimer();
-            }, 3000);
+            // User must manually skip warning screen
           } else {
             startNewRound();
             state.isPaused = false;
@@ -334,6 +355,14 @@
         startTimer();
       }
       render();
+    }
+    
+    function skipWarning() {
+      state.showWarning = false;
+      state.roundTime += 10; // Permanently increase round time by 10 seconds
+      startNewRound();
+      state.isPaused = false;
+      startTimer();
     }
 
     function handleStart() {
@@ -421,7 +450,7 @@
 
     function copyStats() {
       const text = state.roundLog.map(log => 
-        `Round ${log.round}: Dice ${log.dice}${log.robber ? ` (Robber: ${log.robber})` : ''} - ${log.timestamp}`
+        `Round ${log.round}: Dice ${log.dice}${log.robber ? ` (Robber: ${log.robber})` : ''} - ${log.duration}s`
       ).join('\n');
       navigator.clipboard.writeText(text).then(() => {
         alert('Stats copied to clipboard!');
@@ -429,9 +458,9 @@
     }
 
     function exportStatsCSV() {
-      const headers = 'Round,Dice Roll,Robber Number,Timestamp\n';
+      const headers = 'Round,Dice Roll,Robber Number,Duration (seconds)\n';
       const rows = state.roundLog.map(log => 
-        `${log.round},${log.dice},${log.robber || ''},${log.timestamp}`
+        `${log.round},${log.dice},${log.robber || ''},${log.duration}`
       ).join('\n');
       
       const csv = headers + rows;
@@ -470,20 +499,23 @@
 
       // Stats view
       if (state.showStats) {
-        // Navigation tabs
+        // Navigation tabs with hover tooltips
         const tabs = `
-          <div class="flex gap-2 mb-6 overflow-x-auto">
-            <button onclick="changeView('stats')" class="px-4 py-2 rounded font-bold ${state.currentView === 'stats' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+          <div class="flex gap-2 mb-6 overflow-x-auto flex-wrap">
+            <button onclick="changeView('stats')" title="View game statistics and round history" class="px-4 py-2 rounded font-bold ${state.currentView === 'stats' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               📊 Stats
             </button>
-            <button onclick="changeView('advanced')" class="px-4 py-2 rounded font-bold ${state.currentView === 'advanced' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <button onclick="changeView('advanced')" title="View dice probability analysis and advanced metrics" class="px-4 py-2 rounded font-bold ${state.currentView === 'advanced' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               📈 Advanced
             </button>
-            <button onclick="changeView('settings')" class="px-4 py-2 rounded font-bold ${state.currentView === 'settings' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <button onclick="changeView('settings')" title="Configure game settings and preferences" class="px-4 py-2 rounded font-bold ${state.currentView === 'settings' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               ⚙️ Settings
             </button>
-            <button onclick="changeView('info')" class="px-4 py-2 rounded font-bold ${state.currentView === 'info' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <button onclick="changeView('info')" title="View keyboard shortcuts, rules, and about information" class="px-4 py-2 rounded font-bold ${state.currentView === 'info' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               ℹ️ Info
+            </button>
+            <button onclick="showNewGameConfirm()" title="Start a new game and reset all statistics" class="px-4 py-2 rounded font-bold bg-red-600 hover:bg-red-700">
+              🔄 New Game
             </button>
           </div>
         `;
@@ -501,7 +533,7 @@
               <td class="px-4 py-3 text-center ${log.robber ? 'text-red-400 font-bold' : 'text-gray-500'}">
                 ${log.robber || '—'}
               </td>
-              <td class="px-4 py-3 text-gray-400 text-sm">${log.timestamp}</td>
+              <td class="px-4 py-3 text-gray-400 text-sm">${log.duration}s</td>
             </tr>
           `).join('');
 
@@ -529,17 +561,13 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-              <button onclick="copyStats()" class="px-4 py-3 bg-green-600 rounded hover:bg-green-700 font-bold text-sm md:text-base">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+              <button onclick="copyStats()" title="Copy statistics to clipboard" class="px-4 py-3 bg-green-600 rounded hover:bg-green-700 font-bold text-sm md:text-base">
                 📋 Copy Stats
               </button>
               
-              <button onclick="exportStatsCSV()" class="px-4 py-3 bg-purple-600 rounded hover:bg-purple-700 font-bold text-sm md:text-base">
+              <button onclick="exportStatsCSV()" title="Download statistics as CSV file" class="px-4 py-3 bg-purple-600 rounded hover:bg-purple-700 font-bold text-sm md:text-base">
                 📥 Export CSV
-              </button>
-              
-              <button onclick="showNewGameConfirm()" class="px-4 py-3 bg-red-600 rounded hover:bg-red-700 font-bold text-sm md:text-base">
-                🔄 New Game
               </button>
             </div>
 
@@ -551,7 +579,7 @@
                       <th class="px-4 py-3 text-left text-sm font-bold">Round</th>
                       <th class="px-4 py-3 text-center text-sm font-bold">Dice</th>
                       <th class="px-4 py-3 text-center text-sm font-bold">Robber</th>
-                      <th class="px-4 py-3 text-left text-sm font-bold">Time</th>
+                      <th class="px-4 py-3 text-left text-sm font-bold">Duration</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -566,18 +594,28 @@
         // ADVANCED STATS VIEW
         else if (state.currentView === 'advanced') {
           // Calculate advanced stats
-          const diceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+          const diceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+          const robberDiceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+          let sevenCount = 0;
+          
           state.roundLog.forEach(log => {
-            diceCounts[log.dice] = (diceCounts[log.dice] || 0) + 1;
+            if (log.dice === 7) {
+              sevenCount++;
+              if (log.robber && log.robber !== 'Desert') {
+                robberDiceCounts[log.robber] = (robberDiceCounts[log.robber] || 0) + 1;
+              }
+            } else {
+              diceCounts[log.dice] = (diceCounts[log.dice] || 0) + 1;
+            }
           });
           
-          // Expected probabilities for 2d6
+          // Expected probabilities for 2d6 (excluding 7)
           const expectedProb = {
-            2: 2.78, 3: 5.56, 4: 8.33, 5: 11.11, 6: 13.89, 7: 16.67,
+            2: 2.78, 3: 5.56, 4: 8.33, 5: 11.11, 6: 13.89,
             8: 13.89, 9: 11.11, 10: 8.33, 11: 5.56, 12: 2.78
           };
           
-          const totalRolls = state.roundLog.length;
+          const totalRolls = state.roundLog.filter(log => log.dice !== 7).length;
           
           // Calculate longest streak without robber
           let currentStreak = 0;
@@ -591,14 +629,14 @@
             }
           });
           
-          // Average round duration (if we track timestamps properly)
-          const avgDuration = totalRolls > 0 ? state.roundTime : 0;
+          // Average round duration
+          const totalDuration = state.roundLog.reduce((sum, log) => sum + (log.duration || 0), 0);
+          const avgDuration = state.roundLog.length > 0 ? Math.round(totalDuration / state.roundLog.length) : 0;
           
           const probabilityChart = Object.keys(diceCounts).map(num => {
             const actual = totalRolls > 0 ? ((diceCounts[num] / totalRolls) * 100).toFixed(1) : 0;
             const expected = expectedProb[num];
             const diff = totalRolls > 0 ? (actual - expected).toFixed(1) : 0;
-            const barWidth = Math.max(parseFloat(actual), parseFloat(expected));
             
             return `
               <div class="mb-4">
@@ -621,6 +659,22 @@
             `;
           }).join('');
           
+          const robberDiceChart = Object.keys(robberDiceCounts).map(num => {
+            const count = robberDiceCounts[num];
+            const displayNum = num === '7' ? 'Desert' : num;
+            return `
+              <div class="mb-3">
+                <div class="flex justify-between mb-1">
+                  <span class="font-bold">${displayNum}</span>
+                  <span class="text-sm text-red-400">${count} times</span>
+                </div>
+                <div class="relative h-6 bg-gray-700 rounded overflow-hidden">
+                  <div class="absolute h-full bg-red-500" style="width: ${sevenCount > 0 ? (count / sevenCount * 100) : 0}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          
           content = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div class="bg-gradient-to-br from-purple-600 to-purple-800 p-4 rounded-lg">
@@ -628,15 +682,27 @@
                 <div class="text-3xl font-bold">${longestStreak} rounds</div>
               </div>
               <div class="bg-gradient-to-br from-orange-600 to-orange-800 p-4 rounded-lg">
-                <div class="text-sm opacity-80">Average Round Time</div>
+                <div class="text-sm opacity-80">Average Round Duration</div>
                 <div class="text-3xl font-bold">${avgDuration}s</div>
               </div>
             </div>
             
-            <div class="bg-gray-800 p-6 rounded-lg">
+            <div class="bg-gray-800 p-6 rounded-lg mb-6">
               <h3 class="text-xl font-bold mb-4">Dice Roll Probability Analysis</h3>
               <p class="text-sm text-gray-400 mb-4">Blue bars show actual rolls, gray bars show expected probability for fair 2d6 dice.</p>
               ${probabilityChart}
+              <div class="mt-6 p-4 bg-red-900 bg-opacity-30 rounded border border-red-700">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-red-300">Robber (7s only accepted from round ${state.robberStartRound})</span>
+                  <span class="text-2xl font-bold text-red-400">${sevenCount} times</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg">
+              <h3 class="text-xl font-bold mb-4">Robber Dice Distribution</h3>
+              <p class="text-sm text-gray-400 mb-4">When a 7 is rolled, this shows the distribution of the robber placement dice.</p>
+              ${sevenCount > 0 ? robberDiceChart : '<p class="text-gray-500 text-center py-4">No robber activations yet</p>'}
             </div>
           `;
         }
@@ -646,7 +712,7 @@
           content = `
             <div class="space-y-6">
               <!-- Vibration -->
-              <div class="bg-gray-800 p-6 rounded-lg">
+              <div class="bg-gray-800 p-6 rounded-lg" title="Enable or disable vibration alerts">
                 <div class="flex justify-between items-center">
                   <div>
                     <h3 class="text-lg font-bold">Vibration</h3>
@@ -660,7 +726,7 @@
               </div>
               
               <!-- Flash Speed -->
-              <div class="bg-gray-800 p-6 rounded-lg">
+              <div class="bg-gray-800 p-6 rounded-lg" title="Adjust how fast the warning flash alternates">
                 <h3 class="text-lg font-bold mb-2">Flash Speed</h3>
                 <p class="text-sm text-gray-400 mb-4">How fast the warning flash alternates (${state.flashSpeed}ms)</p>
                 <div class="flex items-center gap-4">
@@ -676,7 +742,7 @@
               </div>
               
               <!-- Robber Start Round -->
-              <div class="bg-gray-800 p-6 rounded-lg">
+              <div class="bg-gray-800 p-6 rounded-lg" title="Set which round the robber becomes active">
                 <h3 class="text-lg font-bold mb-2">Robber Activation Round</h3>
                 <p class="text-sm text-gray-400 mb-4">Which round the robber becomes active (currently: ${state.robberStartRound})</p>
                 <div class="flex items-center gap-4">
@@ -697,31 +763,19 @@
         else if (state.currentView === 'info') {
           content = `
             <div class="space-y-6">
-              <!-- Quick Rules -->
-              <div class="bg-gray-800 p-6 rounded-lg">
-                <h3 class="text-xl font-bold mb-4">⚡ Quick Rules</h3>
-                <ul class="space-y-2 text-sm">
-                  <li>• Each round displays a random dice roll (2d6)</li>
-                  <li>• Before round ${state.robberStartRound}, 7s are excluded</li>
-                  <li>• From round ${state.robberStartRound} onwards, rolling 7 activates the robber</li>
-                  <li>• Rounds alternate between Sun (orange) and Moon (blue)</li>
-                  <li>• Timer warns at 5 seconds with flashing and vibration</li>
-                </ul>
-              </div>
-              
               <!-- Keyboard Shortcuts -->
               <div class="bg-gray-800 p-6 rounded-lg">
                 <h3 class="text-xl font-bold mb-4">⌨️ Keyboard Shortcuts</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                  <div class="flex justify-between items-centre bg-gray-700 px-4 py-2 rounded">
                     <span class="text-sm">Pause/Resume</span>
                     <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">SPACE</kbd>
                   </div>
-                  <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                  <div class="flex justify-between items-centre bg-gray-700 px-4 py-2 rounded">
                     <span class="text-sm">Next Round</span>
                     <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">N</kbd>
                   </div>
-                  <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                  <div class="flex justify-between items-centre bg-gray-700 px-4 py-2 rounded">
                     <span class="text-sm">Open Stats</span>
                     <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">S</kbd>
                   </div>
@@ -732,12 +786,98 @@
               <div class="bg-gray-800 p-6 rounded-lg">
                 <h3 class="text-xl font-bold mb-4">ℹ️ About Catan Connect</h3>
                 <p class="text-sm text-gray-300 mb-4">
-                  A digital timer and dice roller for Settlers of Catan games. Features automatic round progression, 
-                  robber mechanics, statistics tracking, and customizable settings.
+                  A digital timer and dice roller for the mega game version of Catan known as <strong>Catan Connect</strong>. 
+                  With multiple copies, this game can be played with an exponential number of people, although always at even numbers. 
+                  Features automatic round progression, robber mechanics, statistics tracking, and customisable settings.
+                </p>
+                <p class="text-sm text-gray-300 mb-4">
+                  <a href="https://boardgamegeek.com/boardgame/451387/catan-connect" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">
+                    View Catan Connect on BoardGameGeek →
+                  </a>
                 </p>
                 <p class="text-xs text-gray-500">
                   Version 1.0 | Built with HTML, CSS & JavaScript
                 </p>
+              </div>
+              
+              <!-- Image -->
+              <div class="bg-gray-800 p-6 rounded-lg text-centre">
+                <img src="Catan_Connect_Front_v1.png" alt="Catan Connect" class="w-full max-w-md mx-auto rounded-lg shadow-lg" onerror="this.style.display='none'">
+              </div>
+              
+              <!-- Teaching Script -->
+              <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4">📖 Teaching Script</h3>
+                <div class="text-sm text-gray-300 space-y-3 max-h-96 overflow-y-auto">
+                  <p class="font-bold text-lg">Welcome to Catan Connect</p>
+                  
+                  <p>In this fast-paced mega game of Catan you will be racing to 18 points.</p>
+                  
+                  <p>Each round I will announce whether the moon-side or the sun side is active, and from round 11 onwards whether the robber is robbing.</p>
+                  
+                  <p>Each round will go for 30 seconds, although I can lengthen this if needed.</p>
+                  
+                  <p>Every player starts with 1 of each of the resources matching the hexes surrounding their city, and 4 points — 2 for their city and 2 for their two settlements.</p>
+                  
+                  <p>Each player starts on a region of their own, with a robber which can only be moved within your own region.</p>
+                  
+                  <p>Each time you build your first settlement into the region on your left or right you will gain 2 victory points, and you can mark that on your playmat.</p>
+                  
+                  <p class="font-bold">There are development tiles which can be purchased from either side of the game mat you are on. These include:</p>
+                  
+                  <ul class="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Road Building (x1)</strong><br>When you play this tile, build 2 roads at no cost</li>
+                    
+                    <li><strong>Invention/Year of Plenty (x1)</strong><br>When you play this tile, take any 2 resources from the supply</li>
+                    
+                    <li><strong>Victory Point (x2)</strong><br>When you are the active player, you may reveal all your Victory Point tiles, including any purchased on that turn, if you can reach the number of VPs needed to win. Otherwise, keep Victory Point tiles face down in front of you</li>
+                    
+                    <li><strong>Knight (x5)</strong><br>When you play the Knight tile:<br>
+                    Move the robber to the desert and take 1 resource corresponding to the hex where the robber was, OR;<br>
+                    If the robber is already in the desert, it remains there and you may take 1 resource of your choice from the supply</li>
+                  </ul>
+                  
+                  <p>If you and your direct opponent ever buy all the development tiles from your game mat, you may purchase them from a neighbour's supply.</p>
+                  
+                  <p>There should be banks of resources within everyone's reach. When a number is rolled that matches the number on a hex you built on, take the resource/s that matches (1 for a settlement and 2 for a city).</p>
+                  
+                  <p>If there are ever no resources available please throw your hand up so we can replenish the banks.</p>
+                  
+                  <p class="font-bold">A general turn goes like this:</p>
+                  
+                  <ol class="list-decimal list-inside space-y-2 ml-4">
+                    <li>I will announce which side is active and what the dice roll is</li>
+                    <li>All players will collect the resources as per the roll</li>
+                    <li>All players can trade with the five people surrounding them</li>
+                    <li>All players can trade at trading posts if they have built a settlement or a city there</li>
+                    <li>If you are the active player and are at one of the ends you may also trade with the Market. At the market you may, once per turn, trade one resource for another resource at the market.</li>
+                    <li>Active players can buy or build any roads, settlements, cities or development tiles</li>
+                    <li>Active players can play 1 development tile which they have bought on a previous turn</li>
+                    <li>The active player may reveal all their Victory Point tiles, including any purchased this turn, if they can reach the number of VPs needed to win</li>
+                  </ol>
+                  
+                  <p class="font-bold">Sevens can only be rolled after the 11th round.</p>
+                  
+                  <p>When a robber is rolled you will need to move it to the number on your mat which corresponds with the number I give.</p>
+                  
+                  <p>The robber doesn't rob in this version of Catan. Instead its purpose is to block.</p>
+                  
+                  <p>You will have to halve your resource pool however if you have over 7 resources. This is rounded down, so if you have 9 resources you only have to get rid of 4.</p>
+                  
+                  <p class="font-bold">The competition of Longest Road and Largest Army is only between you and the person sharing your mat.</p>
+                  
+                  <p>For Longest Road you will need at least 5 of your roads connected, or, after that, more than the other player.</p>
+                  
+                  <p>For Largest Army you need to have played out at least 2 Knights, or, after that, more than the other player.</p>
+                  
+                  <p>If you gain either of these, mark the spot on your mat to claim it and move your point marker up 2 spaces.</p>
+                  
+                  <p>If your opponent takes this achievement from you, they will take your marker to mark on their side on the mat and you will need to put your point tracker down by 2 spaces.</p>
+                  
+                  <p>Because this is a fast paced game, mistakes will be made, and that is okay. Everyone will make a mistake at some point and the point is to have fun. If you ever need a moment to understand something though, please throw your hand up so I can pause the game.</p>
+                  
+                  <p class="font-bold text-lg">Does anyone have any questions?</p>
+                </div>
               </div>
             </div>
           `;
@@ -767,7 +907,11 @@
           <div class="min-h-screen flex items-center justify-center bg-warning">
             <div class="text-center bg-black bg-opacity-50 p-12 rounded-lg">
               <div class="text-6xl font-bold text-white mb-4 animate-pulse">⚠️ WARNING ⚠️</div>
-              <div class="text-4xl font-bold text-white">ROBBER IS NOW ACTIVE</div>
+              <div class="text-4xl font-bold text-white mb-2">ROBBER IS NOW ACTIVE</div>
+              <div class="text-xl text-white mb-8">Rounds will be increased by 10 seconds</div>
+              <button onclick="skipWarning()" class="px-8 py-4 bg-white text-2xl font-bold text-green-700 rounded-lg hover:bg-gray-100">
+                SKIP
+              </button>
             </div>
           </div>
         `;
@@ -809,32 +953,33 @@
 
       // Robber case - NO round number displayed
       if (state.diceNumber === 7 && state.round >= 11 && state.robberNumber !== null) {
+        const robberDisplay = state.robberNumber === 'Desert' ? 'Desert' : state.robberNumber;
         app.innerHTML = `
-          <div class="flex flex-col min-h-screen ${bgClass} text-white" style="position: relative;">
-            <div id="flash-overlay" class="bg-flash" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
-            
+          <div class="flex flex-col min-h-screen bg-warning text-white" style="position: relative;">
             <div style="position: relative; z-index: 10;">
               <div class="absolute top-4 md:top-8 left-4 md:left-8 flex items-center gap-2 md:gap-4 bg-black bg-opacity-40 px-3 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base">
-                <button onclick="adjustRoundTime(-5)" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
+                <button onclick="adjustRoundTime(-5)" title="Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
                 <div class="text-lg md:text-2xl font-bold">${state.roundTime}s</div>
-                <button onclick="adjustRoundTime(5)" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
+                <button onclick="adjustRoundTime(5)" title="Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
-                <button onclick="showStatsPrompt()" class="text-lg md:text-2xl font-bold hover:text-gray-300">📊</button>
+                <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
                 <div class="flex flex-col items-center gap-4 md:gap-6 clamp-center">
-                  <div class="robber-label font-bold" style="font-size: clamp(6rem, 15vw, 10rem); line-height:1;">ROBBER</div>
-                  <div class="dice-circle">
-                    <div class="robber-number font-bold" style="font-size: clamp(10rem, 20vw, 16rem); line-height:1; position: absolute;">${state.robberNumber}</div>
+                  <div class="robber-label font-bold text-center" style="font-size: clamp(4rem, 10vw, 7rem); line-height:1.2;">
+                    ROBBER ON<br>${robberDisplay}
+                  </div>
+                  <div class="text-center" style="font-size: clamp(1.5rem, 4vw, 2.5rem); line-height:1.4; max-width: 90vw;">
+                    If you have more than 7 resources,<br>discard half (rounded down)
                   </div>
                 </div>
 
                 <div class="timer-text font-mono font-bold mt-4 md:mt-8" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
 
                 <div class="flex gap-4 md:gap-6 mt-4 md:mt-6">
-                  <button onclick="togglePause()" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
-                  <button onclick="handleNext()" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
+                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume timer' : 'Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
+                  <button onclick="handleNext()" title="Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
                 </div>
               </div>
             </div>
@@ -847,31 +992,29 @@
         
         app.innerHTML = `
           <div class="flex flex-col min-h-screen ${bgClass} text-white" style="position: relative;">
-            <div id="flash-overlay" class="bg-flash" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
-            
             <div style="position: relative; z-index: 10;">
               <div class="absolute top-4 md:top-8 left-4 md:left-8 flex items-center gap-2 md:gap-4 bg-black bg-opacity-40 px-3 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base">
-                <button onclick="adjustRoundTime(-5)" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
-                <div class="text-lg md:text-2xl font-bold">${state.roundTime}s</div>
-                <button onclick="adjustRoundTime(5)" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
+                <button onclick="adjustRoundTime(-5)" title="Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
+                <div class="text-lg md:text-2xl font-bold" title="Current round time setting">${state.roundTime}s</div>
+                <button onclick="adjustRoundTime(5)" title="Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
-                <div class="round-number text-lg md:text-2xl font-bold">R${state.round}</div>
+                <div class="round-number text-lg md:text-2xl font-bold" title="Current round number">R${state.round}</div>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
-                <button onclick="showStatsPrompt()" class="text-lg md:text-2xl font-bold hover:text-gray-300">📊</button>
+                <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
                 <div class="flex flex-col items-center gap-4 md:gap-8 clamp-center">
-                  <div class="dice-circle">
+                  <div class="dice-circle" title="Current dice roll">
                     <div class="dice-number font-bold" style="font-size: clamp(10rem, 20vw, 15rem); line-height:1; position: absolute;">${state.diceNumber}</div>
                   </div>
-                  <div class="${activeLabelClass} active-label font-bold" style="font-size: clamp(3rem, 8vw, 6rem);">${activeLabel}</div>
-                  <div class="timer-text font-mono font-bold" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
+                  <div class="${activeLabelClass} active-label font-bold" title="Current phase indicator" style="font-size: clamp(3rem, 8vw, 6rem);">${activeLabel}</div>
+                  <div class="timer-text font-mono font-bold" title="Time remaining in round" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
                 </div>
 
                 <div class="flex gap-4 md:gap-6 mt-4 md:mt-6">
-                  <button onclick="togglePause()" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
-                  <button onclick="handleNext()" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
+                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume timer' : 'Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
+                  <button onclick="handleNext()" title="Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
                 </div>
               </div>
             </div>
@@ -917,5 +1060,6 @@
       }
     });
   </script>
+  <script src="../menu.js"></script>
 </body>
 </html>
