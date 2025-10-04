@@ -28,6 +28,7 @@
         { name: 'Age of Sigmar', path: 'AoS/AoS_countdown.html', category: 'other' },
         { name: 'Blood Bowl', path: 'Bloodbowl/Blood_bowl_countdown.html', category: 'other' },
         { name: 'Board Games', path: 'Board_Games/boardgame_countdown.html', category: 'other' },
+        { name: 'Catan Connect', path: 'Catan Connect/catan_connect.html', category: 'other' },
         { name: 'Various Art', path: 'Art_Backgrounds/Art_Backgrounds_countdown.html', category: 'other' }
     ];
     
