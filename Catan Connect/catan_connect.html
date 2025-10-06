@@ -190,6 +190,15 @@
       }
     }
 
+    // Toggle fullscreen mode
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
     // Load saved state on page load
     function loadState() {
       const saved = localStorage.getItem('catanTimerState');
@@ -597,6 +606,7 @@
             <button onclick="showNewGameConfirm()" title="Start a new game and reset all statistics" class="px-4 py-2 rounded font-bold bg-red-600 hover:bg-red-700">
               🔄 New Game
             </button>
+          
           </div>
         `;
         
@@ -1161,6 +1171,7 @@
                 <button onclick="adjustRoundTime(5)" title="Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
                 <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
+                <button onclick="toggleFullscreen()" title="Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
@@ -1199,6 +1210,7 @@
                 <div class="round-number text-lg md:text-2xl font-bold" title="Current round number">R${state.round}</div>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
                 <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
+                <button onclick="toggleFullscreen()" title="Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
