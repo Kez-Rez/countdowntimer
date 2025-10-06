@@ -65,9 +65,7 @@
         return `
             <div class="hamburger-menu">
                 <button class="hamburger-btn" onclick="toggleMenu()">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
+                    🌐
                 </button>
                 <div class="menu-overlay" id="menuOverlay">
                     <div class="menu-content">
@@ -106,10 +104,9 @@
                 height: 50px;
                 cursor: pointer;
                 display: flex;
-                flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                gap: 4px;
+                font-size: 24px;
                 transition: all 0.3s ease;
             }
 
@@ -119,11 +116,7 @@
             }
 
             .hamburger-line {
-                width: 25px;
-                height: 3px;
-                background: #d49415;
-                border-radius: 2px;
-                transition: all 0.3s ease;
+                display: none;
             }
 
             .menu-overlay {
@@ -226,7 +219,7 @@
                 }
                 
                 .hamburger-line {
-                    width: 22px;
+                    display: none;
                 }
             }
         `;
