@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
   <title>Catan Connect</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Offline fallback notice -->
+  <script>
+    // Simple offline detection and graceful fallback
+    window.addEventListener('load', () => {
+      // Check if Tailwind loaded properly
+      setTimeout(() => {
+        const testElement = document.createElement('div');
+        testElement.className = 'bg-blue-500';
+        document.body.appendChild(testElement);
+        const hasColor = window.getComputedStyle(testElement).backgroundColor === 'rgb(59, 130, 246)';
+        document.body.removeChild(testElement);
+        
+        if (!hasColor && !window.tailwindCSSLoaded) {
+          console.warn('Tailwind CSS failed to load - app may not look correct offline');
+          // Could show a simple notice to user if desired
+        }
+      }, 100);
+    });
+  </script>
   <style>
     html, body { 
       height: 100%; 
@@ -61,6 +80,21 @@
       transition: color 0.3s ease-in-out;
     }
     
+    .flash-custom {
+      transition: color 0.3s ease-in-out;
+    }
+    
+    .flash-fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
     .bg-warning {
       /* Robber warning background - forest green */
       background: linear-gradient(135deg, #0d4d0d 0%, #1a661a 50%, #0d4d0d 100%);
@@ -69,7 +103,7 @@
     }
     
     /* Band for dice number and active status */
-    .dice-circle {
+    .shaded-rectangle {
       width: 100vw;
       margin-left: calc(-50vw + 50%);
       margin-right: calc(-50vw + 50%);
@@ -121,7 +155,7 @@
 
     /* Specific landscape mode adjustments for 1280x800 and similar resolutions */
     @media (orientation: landscape) and (min-width: 1024px) and (max-height: 900px) {
-      .dice-circle {
+      .shaded-rectangle {
         width: 100% !important;
         min-height: min(150px, 40vh) !important;
         border-width: 4px !important;
@@ -185,17 +219,76 @@
   <div id="app"></div>
 
   <script>
+    // Game Configuration Constants
+    const GAME_CONFIG = {
+      DEFAULT_ROUND_TIME: 30,
+      ROBBER_START_ROUND: 11,
+      ROBBER_TIME_BONUS: 10,
+      COUNTDOWN_START: 3,
+      WARNING_FLASH_THRESHOLD: 5,
+      MIN_ROUND_TIME: 10,
+      MAX_ROUND_TIME: 120,
+      VIBRATION_PATTERN: [200, 100, 200],
+      FLASH_SPEEDS: {
+        MIN: 300,
+        MAX: 1000,
+        STEP: 100
+      }
+    };
+
+    // UI Constants
+    const UI_CONSTANTS = {
+      COLORS: {
+        FLASH_RED: '#ff0000',
+        WARNING_GREEN: '#0d4d0d'
+      },
+      CSS_CLASSES: {
+        CARD: 'bg-gray-800 p-6 rounded-lg',
+        CARD_HEADER: 'bg-gray-700 p-1 rounded-lg',
+        BUTTON_PRIMARY: 'px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 font-bold',
+        BUTTON_SUCCESS: 'px-6 py-3 bg-green-600 rounded hover:bg-green-700 font-bold',
+        BUTTON_DANGER: 'px-6 py-3 bg-red-600 rounded hover:bg-red-700 font-bold',
+        CHECKBOX: 'w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded',
+        CHECKBOX_LARGE: 'w-5 h-5 text-red-600 bg-gray-700 border-gray-600 rounded',
+        LABEL: 'flex items-center gap-3 cursor-pointer'
+      }
+    };
+
+    // State Defaults Configuration
+    const STATE_DEFAULTS = {
+      vibrationEnabled: true,
+      vibrate10sec: false,
+      vibrate5sec: true,
+      vibrate3sec: false,
+      vibrate1sec: false,
+      flashSpeed: 600,
+      flashTextEnabled: true,
+      flashFullscreenEnabled: false,
+      flashColor: UI_CONSTANTS.COLORS.FLASH_RED,
+      flashOpacity: 40,
+      flashThreshold: GAME_CONFIG.WARNING_FLASH_THRESHOLD,
+      robberStartRound: GAME_CONFIG.ROBBER_START_ROUND,
+      chimeEnabled: true,
+      chimeVolume: 50,
+      chime10sec: false,
+      chime5sec: true,
+      chime3sec: false,
+      chime1sec: false,
+      currentView: 'stats',
+      wasRunningBeforeMenu: false
+    };
+
     // State
     let state = {
       round: 1,
-      roundTime: 30,
-      timeLeft: 30,
+      roundTime: GAME_CONFIG.DEFAULT_ROUND_TIME,
+      timeLeft: GAME_CONFIG.DEFAULT_ROUND_TIME,
       isPaused: true,
       diceNumber: null,
       robberNumber: null,
       showWarning: false,
       countdownPhase: false,
-      countdownValue: 3,
+      countdownValue: GAME_CONFIG.COUNTDOWN_START,
       showStats: false,
       roundLog: [], // {round, dice, robber, duration}
       currentCountdownInterval: null,
@@ -207,7 +300,12 @@
       vibrate3sec: false,
       vibrate1sec: false,
       flashSpeed: 600,
-      robberStartRound: 11,
+      flashTextEnabled: true, // Text flash (always red)
+      flashFullscreenEnabled: false, // Fullscreen flash (custom colour)
+      flashColor: '#ff0000',
+      flashOpacity: 40, // 0-100 for fullscreen flash opacity
+      flashThreshold: GAME_CONFIG.WARNING_FLASH_THRESHOLD,
+      robberStartRound: GAME_CONFIG.ROBBER_START_ROUND,
       chimeEnabled: true,
       chimeVolume: 50,
       chime10sec: false,
@@ -215,7 +313,8 @@
       chime3sec: false,
       chime1sec: false,
       currentView: 'stats', // 'stats', 'settings', 'info', 'advanced'
-      roundStartTime: null
+      roundStartTime: null,
+      wasRunningBeforeMenu: false // Track if timer was running before opening menu
     };
 
     let intervalTimer = null;
@@ -223,43 +322,151 @@
     let flashState = false;
     let chimeAudio = null;
 
-    // Initialize chime audio
+    // =============================================================================
+    // UTILITY FUNCTIONS
+    // =============================================================================
+
+    // Generic error handling utility
+    function safeExecute(fn, errorMsg) {
+      try {
+        return fn();
+      } catch(e) {
+        console.log(errorMsg, e);
+        return null;
+      }
+    }
+
+    // Generic timing check utility
+    function shouldTriggerAtTime(timeLeft, featureType) {
+      const enabledKey = `${featureType}Enabled`;
+      if (!state[enabledKey]) return false;
+      
+      const timings = [
+        { seconds: 10, key: '10sec' },
+        { seconds: 5, key: '5sec' },
+        { seconds: 3, key: '3sec' },
+        { seconds: 1, key: '1sec' }
+      ];
+      
+      return timings.some(timing => {
+        return timeLeft === timing.seconds && state[`${featureType}${timing.key}`];
+      });
+    }
+
+    // Flash element utilities
+    function getFlashElements() {
+      return {
+        diceNum: document.querySelector('.dice-number'),
+        timer: document.querySelector('.timer-text'),
+        activeLabel: document.querySelector('.active-label')
+      };
+    }
+
+    function applyFlashToElements(elements, isFlashing) {
+      Object.values(elements).forEach(element => {
+        if (!element) return;
+        if (isFlashing) {
+          element.classList.add('flash-custom');
+          element.style.color = UI_CONSTANTS.COLORS.FLASH_RED;
+        } else {
+          element.classList.remove('flash-custom', 'flash-red');
+          element.style.color = '';
+        }
+      });
+    }
+
+    // HTML template helpers
+    function createButton({ onclick, title, text, classes = UI_CONSTANTS.CSS_CLASSES.BUTTON_PRIMARY, icon = '' }) {
+      return `
+        <button onclick="${onclick}" title="${title}" class="${classes}">
+          ${icon} ${text}
+        </button>
+      `;
+    }
+
+    function createCheckbox(settingKey, label, classes = UI_CONSTANTS.CSS_CLASSES.CHECKBOX) {
+      return `
+        <label class="${UI_CONSTANTS.CSS_CLASSES.LABEL}">
+          <input type="checkbox" ${state[settingKey] ? 'checked' : ''} 
+            onchange="toggleSetting('${settingKey}')" 
+            class="${classes}">
+          <span class="text-white">${label}</span>
+        </label>
+      `;
+    }
+
+    function createTimingCheckboxes(featureType, timings) {
+      return timings.map(({key, label}) => 
+        createCheckbox(`${featureType}${key}`, label)
+      ).join('');
+    }
+
+    // State management utilities
+    function loadStateProperty(parsed, key, defaultValue = STATE_DEFAULTS[key]) {
+      return parsed[key] !== undefined ? parsed[key] : defaultValue;
+    }
+
+    // Update just the timer display in stats menu without full render
+    function updateMenuTimerDisplay() {
+      if (!state.showStats || state.diceNumber === null) return;
+      
+      const timerElement = document.querySelector('[data-menu-timer]');
+      if (timerElement) {
+        const minutes = Math.floor(state.timeLeft / 60);
+        const seconds = String(state.timeLeft % 60).padStart(2, '0');
+        const isWarning = state.timeLeft <= 5;
+        
+        timerElement.innerHTML = `
+          <span class="font-bold text-yellow-300">Round ${state.round}</span> • 
+          <span class="font-mono font-bold ${isWarning ? 'text-red-400' : 'text-white'}">${minutes}:${seconds}</span> 
+          <span class="text-gray-400">${state.isPaused ? '(PAUSED)' : 'remaining'}</span>
+        `;
+      }
+    }
+
+    // Initialize chime audio with error handling
     function initChime() {
       if (!chimeAudio) {
         chimeAudio = new Audio('ding-sfx-330333_by_kakaist.mp3');
         chimeAudio.preload = 'auto';
+        chimeAudio.onerror = (e) => {
+          console.warn('Could not load chime audio:', e);
+          // Gracefully disable chime functionality if audio fails
+          state.chimeEnabled = false;
+        };
+        chimeAudio.oncanplaythrough = () => {
+          console.log('Chime audio loaded successfully');
+        };
       }
       chimeAudio.volume = state.chimeVolume / 100;
     }
 
     // Check if vibration should trigger at current time
     function shouldVibrate(timeLeft) {
-      if (!state.vibrationEnabled) return false;
-      
-      return (timeLeft === 10 && state.vibrate10sec) ||
-             (timeLeft === 5 && state.vibrate5sec) ||
-             (timeLeft === 3 && state.vibrate3sec) ||
-             (timeLeft === 1 && state.vibrate1sec);
+      return shouldTriggerAtTime(timeLeft, 'vibration');
     }
 
     // Check if chime should play at current time
     function shouldChime(timeLeft) {
-      if (!state.chimeEnabled) return false;
-      
-      return (timeLeft === 10 && state.chime10sec) ||
-             (timeLeft === 5 && state.chime5sec) ||
-             (timeLeft === 3 && state.chime3sec) ||
-             (timeLeft === 1 && state.chime1sec);
+      return shouldTriggerAtTime(timeLeft, 'chime');
     }
 
     // Play chime sound
     function playChime() {
       if (!chimeAudio) initChime();
-      try {
+      safeExecute(() => {
         chimeAudio.currentTime = 0;
         chimeAudio.play().catch(e => console.log('Chime play failed:', e));
-      } catch(e) {
-        console.log('Chime error:', e);
+      }, 'Chime error:');
+    }
+
+    // Test vibration
+    function testVibration() {
+      if (navigator.vibrate && state.vibrationEnabled) {
+        safeExecute(
+          () => navigator.vibrate(GAME_CONFIG.VIBRATION_PATTERN),
+          'Vibration test failed:'
+        );
       }
     }
 
@@ -275,61 +482,60 @@
     // Load saved state on page load
     function loadState() {
       const saved = localStorage.getItem('catanTimerState');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // Restore relevant state (but keep game paused)
-          state.round = parsed.round || 1;
-          state.roundTime = parsed.roundTime || 30;
-          state.roundLog = parsed.roundLog || [];
-          state.diceNumber = parsed.diceNumber || null;
-          state.robberNumber = parsed.robberNumber || null;
-          state.vibrationEnabled = parsed.vibrationEnabled !== undefined ? parsed.vibrationEnabled : true;
-          state.vibrate10sec = parsed.vibrate10sec !== undefined ? parsed.vibrate10sec : false;
-          state.vibrate5sec = parsed.vibrate5sec !== undefined ? parsed.vibrate5sec : true;
-          state.vibrate3sec = parsed.vibrate3sec !== undefined ? parsed.vibrate3sec : false;
-          state.vibrate1sec = parsed.vibrate1sec !== undefined ? parsed.vibrate1sec : false;
-          state.flashSpeed = parsed.flashSpeed || 600;
-          state.robberStartRound = parsed.robberStartRound || 11;
-          state.chimeEnabled = parsed.chimeEnabled !== undefined ? parsed.chimeEnabled : true;
-          state.chimeVolume = parsed.chimeVolume !== undefined ? parsed.chimeVolume : 50;
-          state.chime10sec = parsed.chime10sec !== undefined ? parsed.chime10sec : false;
-          state.chime5sec = parsed.chime5sec !== undefined ? parsed.chime5sec : true;
-          state.chime3sec = parsed.chime3sec !== undefined ? parsed.chime3sec : false;
-          state.chime1sec = parsed.chime1sec !== undefined ? parsed.chime1sec : false;
-          // Always start paused after reload
-          state.isPaused = true;
-          state.timeLeft = parsed.timeLeft || state.roundTime;
-        } catch(e) {
-          console.error('Failed to load saved state', e);
+      if (!saved) return;
+
+      safeExecute(() => {
+        const parsed = JSON.parse(saved);
+        
+        // Restore core game state
+        state.round = parsed.round || 1;
+        state.roundTime = parsed.roundTime || GAME_CONFIG.DEFAULT_ROUND_TIME;
+        state.roundLog = parsed.roundLog || [];
+        state.diceNumber = parsed.diceNumber || null;
+        state.robberNumber = parsed.robberNumber || null;
+        state.timeLeft = parsed.timeLeft || state.roundTime;
+
+        // Load all settings using utility function
+        Object.keys(STATE_DEFAULTS).forEach(key => {
+          state[key] = loadStateProperty(parsed, key);
+        });
+
+        // Handle backwards compatibility for old flashType
+        if (parsed.flashType !== undefined) {
+          if (parsed.flashType === 'text') {
+            state.flashTextEnabled = true;
+            state.flashFullscreenEnabled = false;
+          } else if (parsed.flashType === 'fullscreen') {
+            state.flashTextEnabled = false;
+            state.flashFullscreenEnabled = true;
+          }
         }
-      }
+
+        // Always start paused after reload
+        state.isPaused = true;
+      }, 'Failed to load saved state:');
     }
 
     // Save state to localStorage
     function saveState() {
-      const toSave = {
-        round: state.round,
-        roundTime: state.roundTime,
-        timeLeft: state.timeLeft,
-        diceNumber: state.diceNumber,
-        robberNumber: state.robberNumber,
-        roundLog: state.roundLog,
-        vibrationEnabled: state.vibrationEnabled,
-        vibrate10sec: state.vibrate10sec,
-        vibrate5sec: state.vibrate5sec,
-        vibrate3sec: state.vibrate3sec,
-        vibrate1sec: state.vibrate1sec,
-        flashSpeed: state.flashSpeed,
-        robberStartRound: state.robberStartRound,
-        chimeEnabled: state.chimeEnabled,
-        chimeVolume: state.chimeVolume,
-        chime10sec: state.chime10sec,
-        chime5sec: state.chime5sec,
-        chime3sec: state.chime3sec,
-        chime1sec: state.chime1sec
-      };
-      localStorage.setItem('catanTimerState', JSON.stringify(toSave));
+      safeExecute(() => {
+        const toSave = {
+          // Core game state
+          round: state.round,
+          roundTime: state.roundTime,
+          timeLeft: state.timeLeft,
+          diceNumber: state.diceNumber,
+          robberNumber: state.robberNumber,
+          roundLog: state.roundLog
+        };
+
+        // Add all settings from STATE_DEFAULTS
+        Object.keys(STATE_DEFAULTS).forEach(key => {
+          toSave[key] = state[key];
+        });
+
+        localStorage.setItem('catanTimerState', JSON.stringify(toSave));
+      }, 'Failed to save state:');
     }
 
     // Dice utilities - VERIFIED CORRECT
@@ -379,7 +585,7 @@
           state.robberNumber = rollDice();
           // Handle desert case
           if (state.robberNumber === 7) {
-            state.robberNumber = 'DESERT (7)';
+            state.robberNumber = 'Desert';
           }
           logRound(newDice, state.robberNumber);
         } else {
@@ -393,9 +599,9 @@
       }
       state.diceNumber = newDice;
       
-      // Increase round time by 10 seconds from round 11 onwards
-      if (state.round >= 11) {
-        state.timeLeft = state.roundTime + 10;
+      // Increase round time by bonus seconds from robber start round onwards
+      if (state.round >= GAME_CONFIG.ROBBER_START_ROUND) {
+        state.timeLeft = state.roundTime + GAME_CONFIG.ROBBER_TIME_BONUS;
       } else {
         state.timeLeft = state.roundTime;
       }
@@ -414,41 +620,73 @@
           } else {
             state.timeLeft--;
             if (shouldVibrate(state.timeLeft) && navigator.vibrate) {
-              try { navigator.vibrate([200,100,200]); } catch(e){}
+              try { navigator.vibrate(GAME_CONFIG.VIBRATION_PATTERN); } catch(e){}
             }
             if (shouldChime(state.timeLeft)) {
               playChime();
             }
             saveState();
-            render();
+            // Only render if not in stats menu to prevent scroll jumping
+            if (!state.showStats) {
+              render();
+            } else {
+              // Update just the timer display in the menu
+              updateMenuTimerDisplay();
+            }
           }
         }, 1000);
 
-        // Flash text red when <= 5 seconds
+        // Flash warning when <= threshold seconds
         intervalFlash = setInterval(() => {
-          const shouldFlash = (state.timeLeft <= 5 && state.timeLeft > 0 && !state.isPaused && !state.countdownPhase && !state.showWarning);
+          const shouldFlash = (state.timeLeft <= state.flashThreshold && state.timeLeft > 0 && !state.isPaused && !state.countdownPhase && !state.showWarning);
           if (shouldFlash) {
             flashState = !flashState;
-            const diceNum = document.querySelector('.dice-number');
-            const timer = document.querySelector('.timer-text');
-            const activeLabel = document.querySelector('.active-label');
             
-            if (flashState) {
-              if (diceNum) diceNum.classList.add('flash-red');
-              if (timer) timer.classList.add('flash-red');
-              if (activeLabel) activeLabel.classList.add('flash-red');
-            } else {
-              if (diceNum) diceNum.classList.remove('flash-red');
-              if (timer) timer.classList.remove('flash-red');
-              if (activeLabel) activeLabel.classList.remove('flash-red');
+            // Fullscreen flash (if enabled)
+            if (state.flashFullscreenEnabled) {
+              let flashOverlay = document.getElementById('flash-overlay');
+              if (!flashOverlay) {
+                flashOverlay = document.createElement('div');
+                flashOverlay.id = 'flash-overlay';
+                flashOverlay.className = 'flash-fullscreen';
+                document.body.appendChild(flashOverlay);
+              }
+              
+              if (flashState) {
+                flashOverlay.style.backgroundColor = state.flashColor;
+                flashOverlay.style.opacity = (state.flashOpacity / 100).toString();
+              } else {
+                flashOverlay.style.opacity = '0';
+              }
+            }
+            
+            // Text flash (if enabled) - always red
+            if (state.flashTextEnabled) {
+              const elements = getFlashElements();
+              applyFlashToElements(elements, flashState);
             }
           } else {
+            // Clear all flashing
+            const flashOverlay = document.getElementById('flash-overlay');
+            if (flashOverlay) {
+              flashOverlay.style.opacity = '0';
+            }
+            
             const diceNum = document.querySelector('.dice-number');
             const timer = document.querySelector('.timer-text');
             const activeLabel = document.querySelector('.active-label');
-            if (diceNum) diceNum.classList.remove('flash-red');
-            if (timer) timer.classList.remove('flash-red');
-            if (activeLabel) activeLabel.classList.remove('flash-red');
+            if (diceNum) {
+              diceNum.classList.remove('flash-custom', 'flash-red');
+              diceNum.style.color = '';
+            }
+            if (timer) {
+              timer.classList.remove('flash-custom', 'flash-red');
+              timer.style.color = '';
+            }
+            if (activeLabel) {
+              activeLabel.classList.remove('flash-custom', 'flash-red');
+              activeLabel.style.color = '';
+            }
           }
         }, state.flashSpeed);
       }
@@ -457,12 +695,31 @@
     function stopTimerAndFlash() {
       if (intervalTimer) { clearInterval(intervalTimer); intervalTimer = null; }
       if (intervalFlash) { clearInterval(intervalFlash); intervalFlash = null; }
-      const diceNum = document.querySelector('.dice-number');
-      const timer = document.querySelector('.timer-text');
-      const activeLabel = document.querySelector('.active-label');
-      if (diceNum) diceNum.classList.remove('flash-red');
-      if (timer) timer.classList.remove('flash-red');
-      if (activeLabel) activeLabel.classList.remove('flash-red');
+      
+      // Clear fullscreen flash
+      const flashOverlay = document.getElementById('flash-overlay');
+      if (flashOverlay) {
+        flashOverlay.style.opacity = '0';
+      }
+      
+      // Clear text flash
+      const elements = getFlashElements();
+      applyFlashToElements(elements, false);
+      flashState = false;
+    }
+
+    function stopFlashOnly() {
+      if (intervalFlash) { clearInterval(intervalFlash); intervalFlash = null; }
+      
+      // Clear fullscreen flash
+      const flashOverlay = document.getElementById('flash-overlay');
+      if (flashOverlay) {
+        flashOverlay.style.opacity = '0';
+      }
+      
+      // Clear text flash
+      const elements = getFlashElements();
+      applyFlashToElements(elements, false);
       flashState = false;
     }
 
@@ -473,8 +730,8 @@
       }
       
       state.countdownPhase = true;
-      state.countdownValue = 3;
-      state.isPaused = true;
+      state.countdownValue = GAME_CONFIG.COUNTDOWN_START;
+      // Don't set isPaused during countdown - it's just transitioning
       stopTimerAndFlash();
       render();
 
@@ -486,9 +743,10 @@
           clearInterval(countdownInterval);
           state.countdownPhase = false;
 
+          // Only increment round for non-robber rounds (robber is between rounds)
           if (state.robberNumber === null) state.round++;
 
-          if (state.robberNumber === null && state.round === 11) {
+          if (state.robberNumber === null && state.round === GAME_CONFIG.ROBBER_START_ROUND) {
             state.showWarning = true;
             render();
             // User must manually skip warning screen
@@ -515,7 +773,6 @@
     
     function skipWarning() {
       state.showWarning = false;
-      state.roundTime += 10; // Permanently increase round time by 10 seconds
       startNewRound();
       state.isPaused = false;
       startTimer();
@@ -526,16 +783,65 @@
       state.isPaused = false;
       startTimer();
     }
+    
+    function handleContinueGame() {
+      // Continue from current state (if diceNumber exists, resume game)
+      if (state.diceNumber !== null) {
+        // Apply current round time setting from landing page to continued game
+        state.timeLeft = state.roundTime;
+        state.isPaused = false;
+        startTimer();
+      } else {
+        // If no saved game, start new
+        handleStart();
+      }
+    }
+    
+    function confirmNewGame() {
+      if (confirm('Are you sure you want to start a new game? This will reset all progress and clear statistics.')) {
+        // Clear everything for a fresh start (but keep current round time setting from landing page)
+        const currentRoundTime = state.roundTime;  // Preserve landing page setting
+        state.round = 1;
+        state.roundTime = currentRoundTime;
+        state.timeLeft = currentRoundTime;
+        state.isPaused = true;
+        state.diceNumber = null;
+        state.robberNumber = null;
+        state.showWarning = false;
+        state.countdownPhase = false;
+        state.roundLog = [];
+        state.roundStartTime = null;
+        
+        // Clear saved state completely
+        localStorage.removeItem('catanTimerState');
+        saveState();
+        
+        // Start new game
+        handleStart();
+      }
+    }
 
     function adjustRoundTime(delta) {
-      state.roundTime = Math.max(10, Math.min(120, state.roundTime + delta));
+      state.roundTime = Math.max(GAME_CONFIG.MIN_ROUND_TIME, Math.min(GAME_CONFIG.MAX_ROUND_TIME, state.roundTime + delta));
       saveState();
       render();
     }
 
     function showStatsPrompt() {
-      state.showPauseModal = true;
-      render();
+      // Track if timer was running before opening menu
+      state.wasRunningBeforeMenu = !state.isPaused;
+      
+      // Stop any flashing when opening settings, but keep timer running
+      stopFlashOnly();
+      
+      // If already paused, skip the dialog
+      if (state.isPaused) {
+        state.showStats = true;
+        render();
+      } else {
+        state.showPauseModal = true;
+        render();
+      }
     }
 
     function handleStatsChoice(shouldPause) {
@@ -549,36 +855,31 @@
 
     function closeStats() {
       state.showStats = false;
+      
+      // If timer was running before menu and user didn't pause it, resume it
+      if (state.wasRunningBeforeMenu && !state.isPaused && state.diceNumber !== null && !state.countdownPhase && !state.showWarning) {
+        startTimer();
+      }
+      
       render();
     }
     
     function showNewGameConfirm() {
-      if (confirm('Are you sure you want to start a new game? This will reset everything and clear all stats.')) {
-        // Clear everything
-        state.round = 1;
-        state.roundTime = 30;
-        state.timeLeft = 30;
-        state.isPaused = true;
-        state.diceNumber = null;
-        state.robberNumber = null;
-        state.showWarning = false;
-        state.countdownPhase = false;
-        state.roundLog = [];
-        
-        // Keep settings but clear game state
-        localStorage.removeItem('catanTimerState');
-        saveState();
-        
-        // Stop all timers
-        stopTimerAndFlash();
-        if (state.currentCountdownInterval) {
-          clearInterval(state.currentCountdownInterval);
-          state.currentCountdownInterval = null;
-        }
-        
-        state.showStats = false;
-        render();
+      // Save current game state and go to landing page
+      saveState();
+      
+      // Stop all timers but don't clear data
+      stopTimerAndFlash();
+      if (state.currentCountdownInterval) {
+        clearInterval(state.currentCountdownInterval);
+        state.currentCountdownInterval = null;
       }
+      
+      // Set to show landing page (diceNumber = null triggers start screen)
+      state.diceNumber = null;
+      state.isPaused = true;
+      state.showStats = false;
+      render();
     }
     
     function changeView(view) {
@@ -593,7 +894,12 @@
     }
     
     function updateSetting(setting, value) {
-      state[setting] = parseInt(value);
+      // Handle different value types
+      if (setting === 'flashColor') {
+        state[setting] = value;
+      } else {
+        state[setting] = parseInt(value);
+      }
       
       // Update chime volume immediately
       if (setting === 'chimeVolume' && chimeAudio) {
@@ -602,8 +908,8 @@
       
       saveState();
       
-      // If changing flash speed while game is running, restart timer
-      if (setting === 'flashSpeed' && !state.isPaused) {
+      // If changing flash settings while game is running, restart timer
+      if ((setting === 'flashSpeed' || setting === 'flashTextEnabled' || setting === 'flashFullscreenEnabled' || setting === 'flashColor' || setting === 'flashOpacity' || setting === 'flashThreshold') && !state.isPaused) {
         startTimer();
       }
       
@@ -635,27 +941,977 @@
       window.URL.revokeObjectURL(url);
     }
 
-    function render() {
-      const app = document.getElementById('app');
+    // =============================================================================
+    // RENDER FUNCTIONS
+    // =============================================================================
 
-      // Pause modal
-      if (state.showPauseModal) {
+    function renderPauseModal() {
+      const app = document.getElementById('app');
+      
+      if (state.isPaused) {
         app.innerHTML = `
           <div class="modal-overlay">
-            <div class="bg-gray-800 p-8 rounded-lg text-white text-center max-w-md">
-              <h2 class="text-2xl font-bold mb-4">View Settings & Statistics</h2>
-              <p class="mb-6">Would you like to pause the game?</p>
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD} text-white text-center max-w-md">
+              <h2 class="text-2xl font-bold mb-4">Timer is Paused</h2>
+              <p class="mb-6">The timer is currently paused. Continue to view settings & statistics.</p>
               <div class="flex gap-4 justify-center">
-                <button onclick="handleStatsChoice(true)" class="px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 font-bold">
-                  Yes, Pause
-                </button>
-                <button onclick="handleStatsChoice(false)" class="px-6 py-3 bg-green-600 rounded hover:bg-green-700 font-bold">
-                  No, Continue
-                </button>
+                ${createButton({ 
+                  onclick: "handleStatsChoice(false)", 
+                  title: "Continue to menu", 
+                  text: "Continue",
+                  classes: UI_CONSTANTS.CSS_CLASSES.BUTTON_SUCCESS
+                })}
               </div>
             </div>
           </div>
         `;
+      } else {
+        app.innerHTML = `
+          <div class="modal-overlay">
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD} text-white text-center max-w-md">
+              <h2 class="text-2xl font-bold mb-4">View Settings & Statistics</h2>
+              <p class="mb-6">Would you like to pause the game?</p>
+              <div class="flex gap-4 justify-center">
+                ${createButton({ 
+                  onclick: "handleStatsChoice(true)", 
+                  title: "Pause and open menu", 
+                  text: "Yes, Pause",
+                  classes: UI_CONSTANTS.CSS_CLASSES.BUTTON_PRIMARY
+                })}
+                ${createButton({ 
+                  onclick: "handleStatsChoice(false)", 
+                  title: "Continue without pausing", 
+                  text: "No, Continue",
+                  classes: UI_CONSTANTS.CSS_CLASSES.BUTTON_SUCCESS
+                })}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderStatsView() {
+      const app = document.getElementById('app');
+      
+      // Navigation tabs
+      const tabs = `
+        <div class="flex gap-2 mb-6 overflow-x-auto flex-wrap">
+          ${createButton({ 
+            onclick: "changeView('stats')", 
+            title: "Stats: View game statistics and round history", 
+            text: "📊 Stats",
+            classes: `px-4 py-2 rounded font-bold ${state.currentView === 'stats' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`
+          })}
+          ${createButton({ 
+            onclick: "changeView('advanced')", 
+            title: "Advanced: View dice probability analysis and advanced metrics", 
+            text: "📈 Advanced",
+            classes: `px-4 py-2 rounded font-bold ${state.currentView === 'advanced' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`
+          })}
+          ${createButton({ 
+            onclick: "changeView('settings')", 
+            title: "Settings: Configure game settings and preferences", 
+            text: "⚙️ Settings",
+            classes: `px-4 py-2 rounded font-bold ${state.currentView === 'settings' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`
+          })}
+          ${createButton({ 
+            onclick: "changeView('info')", 
+            title: "Info: View keyboard shortcuts, rules, and about information", 
+            text: "ℹ️ Info",
+            classes: `px-4 py-2 rounded font-bold ${state.currentView === 'info' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`
+          })}
+          ${createButton({ 
+            onclick: "showNewGameConfirm()", 
+            title: "Start Screen: Go to start screen to begin a new game", 
+            text: "🏠 Start Screen",
+            classes: "px-4 py-2 rounded font-bold bg-orange-600 hover:bg-orange-700"
+          })}
+        </div>
+      `;
+      
+      // Get content based on current view
+      let content = '';
+      if (state.currentView === 'stats') {
+        content = renderStatsContent();
+      } else if (state.currentView === 'advanced') {
+        content = renderAdvancedStatsContent();
+      } else if (state.currentView === 'settings') {
+        content = renderSettingsContent();
+      } else if (state.currentView === 'info') {
+        content = renderInfoContent();
+      }
+
+      // Store current scroll position before render
+      const scrollContainer = document.querySelector('.overflow-y-auto');
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+      
+      app.innerHTML = `
+        <div class="min-h-screen max-h-screen flex flex-col items-center justify-start bg-gray-900 text-white overflow-hidden" style="position: relative; z-index: 9999;">
+          <div class="flex-shrink-0 p-4 md:p-6 w-full max-w-4xl">
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+              <div class="flex flex-col">
+                <h1 class="text-3xl md:text-4xl font-bold">Catan Connect</h1>
+                ${state.diceNumber !== null ? `
+                  <div class="flex items-center gap-3 mt-1">
+                    <div class="text-lg text-gray-300" style="font-size: 1.4em;" data-menu-timer>
+                      <span class="font-bold text-yellow-300">Round ${state.round}</span> • 
+                      <span class="font-mono font-bold ${state.timeLeft <= 5 ? 'text-red-400' : 'text-white'}">${Math.floor(state.timeLeft / 60)}:${String(state.timeLeft % 60).padStart(2,'0')}</span> 
+                      <span class="text-gray-400">${state.isPaused ? '(PAUSED)' : 'remaining'}</span>
+                    </div>
+                    ${createButton({ 
+                      onclick: "togglePause()", 
+                      title: `${state.isPaused ? 'Resume: Resume timer' : 'Pause: Pause timer'}`, 
+                      text: state.isPaused ? '▶' : '⏸',
+                      classes: "text-xl px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all"
+                    })}
+                  </div>
+                ` : ''}
+              </div>
+              ${createButton({ 
+                onclick: "closeStats()", 
+                title: "Back to Game: Return to the main game screen", 
+                text: "← Back to Game",
+                classes: "px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 text-base md:text-lg font-bold"
+              })}
+            </div>
+            ${tabs}
+          </div>
+          <div class="flex-1 overflow-y-auto px-4 md:p-6 pb-4 md:pb-6 w-full" id="statsScrollContainer">
+            <div class="w-full max-w-4xl mx-auto">
+              ${content}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Restore scroll position after render
+      setTimeout(() => {
+        const newScrollContainer = document.getElementById('statsScrollContainer');
+        if (newScrollContainer && scrollTop > 0) {
+          newScrollContainer.scrollTop = scrollTop;
+        }
+      }, 0);
+    }
+
+    function render() {
+      if (state.showPauseModal) {
+        return renderPauseModal();
+      }
+      
+      if (state.showStats) {
+        return renderStatsView();
+      }
+      
+      if (state.showWarning) {
+        return renderWarningView();
+      }
+      
+      if (state.countdownPhase) {
+        return renderCountdownView();
+      }
+      
+      if (state.diceNumber === null) {
+        return renderStartScreen();
+      }
+      
+      return renderGameView();
+    }
+
+    function renderWarningView() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center bg-warning">
+          <div class="text-center bg-black bg-opacity-50 p-12 rounded-lg">
+            <div class="text-6xl font-bold text-white mb-4 animate-pulse">⚠️ WARNING ⚠️</div>
+            <div class="text-4xl font-bold text-white mb-2">THE ROBBERS ARE NOW ACTIVE</div>
+            <div class="text-xl text-white mb-8">Rounds will be increased by 10 seconds</div>
+            ${createButton({ 
+              onclick: "skipWarning()", 
+              title: "Continue: Continue with robber active", 
+              text: "Continue Game",
+              classes: "px-8 py-4 bg-white text-2xl font-bold text-green-700 rounded-lg hover:bg-gray-100"
+            })}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCountdownView() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="min-h-screen flex flex-col items-center justify-center bg-gray-900">
+          <div class="text-9xl font-bold text-white">${state.countdownValue}</div>
+        </div>
+      `;
+    }
+
+    function renderStartScreen() {
+      const app = document.getElementById('app');
+      const hasSavedGame = state.roundLog.length > 0 || localStorage.getItem('catanTimerState');
+      
+      app.innerHTML = `
+        <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-600 via-orange-700 to-orange-800 text-white px-4">
+          <div class="text-center mb-12">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 text-shadow-lg">Catan Connect</h1>
+            <p class="text-xl md:text-2xl text-orange-100 max-w-3xl leading-relaxed font-medium">
+              Game management system for the mega game version of Catan
+            </p>
+            <p class="text-lg md:text-xl text-orange-200 max-w-2xl mt-3 leading-relaxed">
+              Automatic timing • Dice rolling • Round tracking • Statistics
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-6 min-w-80 mb-8">
+            ${hasSavedGame ? `
+              ${createButton({ 
+                onclick: "handleContinueGame()", 
+                title: "Continue Game: Resume your saved game", 
+                text: "CONTINUE GAME",
+                classes: "px-8 py-4 bg-green-600 text-2xl font-bold text-white rounded-lg hover:bg-green-700 shadow-lg"
+              })}
+              <div class="text-center text-green-100 text-sm mb-2">
+                Currently on Round ${state.round} 
+              </div>
+              <div class="border-t border-white opacity-30 my-2"></div>
+            ` : ''}
+            
+            ${createButton({ 
+              onclick: "confirmNewGame()", 
+              title: "New Game: Start a completely fresh game", 
+              text: "✨ START NEW GAME",
+              classes: "px-8 py-4 bg-white text-2xl font-bold text-orange-700 rounded-lg hover:bg-gray-100 shadow-lg"
+            })}
+          </div>
+
+          <!-- Round Time Settings -->
+          <div class="flex flex-col items-center gap-4 mb-8">
+            <div class="flex items-center gap-4 bg-black bg-opacity-30 px-6 py-3 rounded-lg">
+              ${createButton({ 
+                onclick: "adjustRoundTime(-5)", 
+                title: "Decrease Timer: Decrease round time", 
+                text: "−",
+                classes: "text-2xl font-bold hover:text-gray-300 px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded"
+              })}
+              <div class="text-2xl font-bold text-white min-w-24 text-center">${state.roundTime}s per round</div>
+              ${createButton({ 
+                onclick: "adjustRoundTime(5)", 
+                title: "Increase Timer: Increase round time", 
+                text: "+",
+                classes: "text-2xl font-bold hover:text-gray-300 px-3 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded"
+              })}
+            </div>
+          </div>
+
+
+          ${createButton({ 
+            onclick: "showStatsPrompt()", 
+            title: "Settings: View stats, settings, and game info", 
+            text: "Settings & Statistics ⚙️📊",
+            classes: "text-lg md:text-xl px-6 py-2 font-bold text-orange-700 bg-black bg-opacity-100 rounded-lg hover:bg-opacity-60 flex items-center gap-2 transition-all"
+          })}
+        </div>
+      `;
+    }
+
+    function renderGameView() {
+      const app = document.getElementById('app');
+      // Main playing view
+      let bgClass = state.round % 2 === 0 ? "bg-moon" : "bg-sun";
+      if (state.isPaused) {
+        bgClass = "bg-gray-600"; // Grey background when paused
+      }
+      const minutes = String(Math.floor(state.timeLeft / 60)).padStart(2,'0');
+      const seconds = String(state.timeLeft % 60).padStart(2,'0');
+      
+      // Calculate current round length (includes robber bonus if applicable)
+      const currentRoundLength = state.round >= GAME_CONFIG.ROBBER_START_ROUND ? 
+        state.roundTime + GAME_CONFIG.ROBBER_TIME_BONUS : 
+        state.roundTime;
+
+      // Robber case - NO round number displayed
+      if (state.diceNumber === 7 && state.round >= 11 && state.robberNumber !== null) {
+        const robberDisplay = state.robberNumber === 'Desert' ? 'DESERT (7)' : state.robberNumber;
+        const robberBgClass = state.isPaused ? "bg-gray-600" : "bg-warning";
+        app.innerHTML = `
+          <div class="flex flex-col min-h-screen ${robberBgClass} text-white" style="position: relative;">
+            <div style="position: relative; z-index: 10;">
+              ${renderGameControls(currentRoundLength)}
+              <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
+                <div class="shaded-rectangle w-full relative">
+                  ${state.isPaused ? `
+                    <div class="absolute left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl md:text-8xl font-bold text-gray-400 opacity-80 animate-pulse">PAUSED</div>
+                    <div class="absolute right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2 text-6xl md:text-8xl font-bold text-gray-400 opacity-80 animate-pulse">PAUSED</div>
+                  ` : ''}
+                  <div class="robber-label font-bold text-center" style="font-size: clamp(5.2rem, 13vw, 9.1rem); line-height:1.1;">
+                    ROBBER ON<br>${robberDisplay}
+                  </div>
+                </div>
+                <div class="text-center" style="font-size: clamp(1.5rem, 4vw, 2.5rem); line-height:1.4; max-width: 90vw;">
+                  If you have more than 7 resources,<br>discard half (rounded down)
+                </div>
+                <div class="timer-text font-mono font-bold mt-4 md:mt-8" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
+                ${renderGameButtons()}
+              </div>
+            </div>
+            ${renderPausedOverlay()}
+          </div>
+        `;
+      } else {
+        // Normal display with round number
+        const activeLabel = (state.round % 2 === 0) ? "Moon Active" : "Sun Active";
+        const activeLabelClass = (state.round % 2 === 0) ? "moon-active" : "sun-active";
+        
+        app.innerHTML = `
+          <div class="flex flex-col min-h-screen ${bgClass} text-white" style="position: relative;">
+            <div style="position: relative; z-index: 10;">
+              ${renderGameControls(currentRoundLength)}
+              <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
+                <div class="shaded-rectangle w-full relative">
+                  ${state.isPaused ? `
+                    <div class="absolute left-1/4 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">PAUSED</div>
+                    <div class="absolute right-1/4 top-1/2 transform translate-x-1/2 -translate-y-1/2 text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">PAUSED</div>
+                  ` : ''}
+                  <div class="dice-number font-bold text-center" style="font-size: clamp(7rem, 15vw, 18rem); line-height:1;">${state.diceNumber}</div>
+                  <div class="active-label font-bold text-center ${activeLabelClass}" style="font-size: clamp(2.73rem, 7.28vw, 4.55rem); line-height:1.4; margin-top: 1rem; ${state.isPaused ? (state.round % 2 === 0 ? 'color: #001f3f !important;' : 'color: #cc5500 !important;') : ''}">${activeLabel}</div>
+                </div>
+                <div class="timer-text font-mono font-bold mt-4 md:mt-8" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
+                ${renderGameButtons()}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderGameControls(currentRoundLength) {
+      return `
+        <div class="absolute top-4 md:top-8 left-4 md:left-8 flex items-center gap-2 md:gap-4 bg-black bg-opacity-40 px-3 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base">
+          <div class="text-lg md:text-xl font-bold text-yellow-300">Round ${state.round}</div>
+          <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
+          ${createButton({ 
+            onclick: "adjustRoundTime(-5)", 
+            title: "Decrease Timer: Decrease round time", 
+            text: "−",
+            classes: "text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3"
+          })}
+          <div class="text-lg md:text-2xl font-bold">${currentRoundLength}s</div>
+          ${createButton({ 
+            onclick: "adjustRoundTime(5)", 
+            title: "Increase Timer: Increase round time", 
+            text: "+",
+            classes: "text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3"
+          })}
+          <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
+          ${createButton({ 
+            onclick: "showStatsPrompt()", 
+            title: "Menu: For stats, info, settings, or to start a new game", 
+            text: "⚙️/📊",
+            classes: "text-lg md:text-2xl font-bold hover:text-gray-300"
+          })}
+          ${createButton({ 
+            onclick: "toggleFullscreen()", 
+            title: "Fullscreen: Toggle fullscreen", 
+            text: "🖵",
+            classes: "text-lg md:text-2xl font-bold hover:text-gray-300"
+          })}
+        </div>
+      `;
+    }
+
+    function renderGameButtons() {
+      return `
+        <div class="flex gap-4 md:gap-6 mt-4 md:mt-6">
+          ${createButton({ 
+            onclick: "togglePause()", 
+            title: `${state.isPaused ? 'Resume: Resume timer' : 'Pause: Pause timer'}`, 
+            text: state.isPaused ? '▶' : '⏸',
+            classes: "p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl"
+          })}
+          ${createButton({ 
+            onclick: "handleNext()", 
+            title: "Next Round: Skip to next round", 
+            text: "⏭",
+            classes: "p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl"
+          })}
+        </div>
+      `;
+    }
+
+    function renderPausedOverlay() {
+      // PAUSED status now shown in top control bar instead of overlay
+      return '';
+    }
+
+    // Placeholder content render functions - these need to be extracted from the old render function
+    function renderStatsContent() {
+      const statsHTML = state.roundLog.map(log => `
+        <tr class="border-b border-gray-700">
+          <td class="px-4 py-3 font-bold text-yellow-300">${log.round}</td>
+          <td class="px-4 py-3 text-center">
+            <span class="text-2xl font-bold ${log.dice === 7 ? 'text-red-400' : 'text-white'}">${log.dice}</span>
+          </td>
+          <td class="px-4 py-3 text-center ${log.robber ? 'text-red-400 font-bold' : 'text-gray-500'}">
+            ${log.robber || '—'}
+          </td>
+          <td class="px-4 py-3 text-gray-400 text-sm">${log.duration}s</td>
+        </tr>
+      `).join('');
+
+      const totalRounds = state.roundLog.length;
+      const robberRounds = state.roundLog.filter(log => log.robber !== null).length;
+      const diceCounts = {};
+      state.roundLog.forEach(log => {
+        diceCounts[log.dice] = (diceCounts[log.dice] || 0) + 1;
+      });
+      const mostCommon = Object.entries(diceCounts).sort((a, b) => b[1] - a[1])[0];
+
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-4 rounded-lg">
+            <div class="text-sm opacity-80">Total Rounds</div>
+            <div class="text-3xl font-bold">${totalRounds}</div>
+          </div>
+          <div class="bg-gradient-to-br from-red-600 to-red-800 p-4 rounded-lg">
+            <div class="text-sm opacity-80">Robber Activations</div>
+            <div class="text-3xl font-bold">${robberRounds}</div>
+          </div>
+          <div class="bg-gradient-to-br from-green-600 to-green-800 p-4 rounded-lg">
+            <div class="text-sm opacity-80">Most Common Roll</div>
+            <div class="text-3xl font-bold">${mostCommon ? `${mostCommon[0]} (×${mostCommon[1]})` : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+          ${createButton({ 
+            onclick: "copyStats()", 
+            title: "Copy statistics to clipboard", 
+            text: "📋 Copy Stats",
+            classes: "px-4 py-3 bg-green-600 rounded hover:bg-green-700 font-bold text-sm md:text-base"
+          })}
+          
+          ${createButton({ 
+            onclick: "exportStatsCSV()", 
+            title: "Download statistics as CSV file", 
+            text: "📥 Export CSV",
+            classes: "px-4 py-3 bg-purple-600 rounded hover:bg-purple-700 font-bold text-sm md:text-base"
+          })}
+        </div>
+
+        <div class="bg-gray-800 rounded-lg overflow-hidden">
+          <div class="overflow-x-auto max-h-96">
+            <table class="w-full">
+              <thead class="bg-gray-700 sticky top-0">
+                <tr>
+                  <th class="px-4 py-3 text-left text-sm font-bold">Round</th>
+                  <th class="px-4 py-3 text-center text-sm font-bold">Dice</th>
+                  <th class="px-4 py-3 text-center text-sm font-bold">Robber</th>
+                  <th class="px-4 py-3 text-left text-sm font-bold">Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${statsHTML.length > 0 ? statsHTML : '<tr><td colspan="4" class="text-center text-gray-400 py-8">No rounds played yet</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdvancedStatsContent() {
+      // Calculate advanced stats
+      const diceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+      const robberDiceCounts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+      let sevenCount = 0;
+      
+      state.roundLog.forEach(log => {
+        if (log.dice === 7) {
+          sevenCount++;
+          if (log.robber) {
+            robberDiceCounts[log.robber] = (robberDiceCounts[log.robber] || 0) + 1;
+          }
+        } else {
+          diceCounts[log.dice] = (diceCounts[log.dice] || 0) + 1;
+        }
+      });
+      
+      // Expected probabilities for 2d6 (excluding 7)
+      const expectedProb = {
+        2: 2.78, 3: 5.56, 4: 8.33, 5: 11.11, 6: 13.89,
+        8: 13.89, 9: 11.11, 10: 8.33, 11: 5.56, 12: 2.78
+      };
+      
+      const totalRolls = state.roundLog.filter(log => log.dice !== 7).length;
+      
+      // Calculate longest streak without robber
+      let currentStreak = 0;
+      let longestStreak = 0;
+      state.roundLog.forEach(log => {
+        if (log.robber === null) {
+          currentStreak++;
+          longestStreak = Math.max(longestStreak, currentStreak);
+        } else {
+          currentStreak = 0;
+        }
+      });
+      
+      // Average round duration
+      const totalDuration = state.roundLog.reduce((sum, log) => sum + (log.duration || 0), 0);
+      const avgDuration = state.roundLog.length > 0 ? Math.round(totalDuration / state.roundLog.length) : 0;
+      
+      const probabilityChart = Object.keys(diceCounts).map(num => {
+        const actual = totalRolls > 0 ? ((diceCounts[num] / totalRolls) * 100).toFixed(1) : 0;
+        const expected = expectedProb[num];
+        const diff = totalRolls > 0 ? (actual - expected).toFixed(1) : 0;
+        
+        return `
+          <div class="mb-4">
+            <div class="flex justify-between mb-1">
+              <span class="font-bold">${num}</span>
+              <span class="text-sm">
+                <span class="text-blue-400">Actual: ${actual}%</span> | 
+                <span class="text-gray-400">Expected: ${expected}%</span> |
+                <span class="${diff >= 0 ? 'text-green-400' : 'text-red-400'}">${diff > 0 ? '+' : ''}${diff}%</span>
+              </span>
+            </div>
+            <div class="relative h-8 bg-gray-700 rounded overflow-hidden">
+              <div class="absolute h-full bg-orange-300 opacity-60" style="width: ${expected}%"></div>
+              <div class="absolute h-full bg-blue-500" style="width: ${actual}%"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                ${diceCounts[num]} rolls
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      const robberDiceChart = Object.keys(robberDiceCounts)
+        .sort((a, b) => {
+          // Special case: DESERT (7) should be treated as 7 for sorting
+          const aNum = a.includes('DESERT') ? 7 : Number(a);
+          const bNum = b.includes('DESERT') ? 7 : Number(b);
+          return aNum - bNum;
+        })
+        .map(num => {
+          const count = robberDiceCounts[num];
+          const displayNum = num;
+          return `
+            <div class="mb-3">
+              <div class="flex justify-between mb-1">
+                <span class="font-bold">${displayNum}</span>
+                <span class="text-sm text-red-400">${count} times</span>
+              </div>
+              <div class="relative h-6 bg-gray-700 rounded overflow-hidden">
+                <div class="absolute h-full bg-red-500" style="width: ${sevenCount > 0 ? (count / sevenCount * 100) : 0}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      
+      return `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-gradient-to-br from-purple-600 to-purple-800 p-4 rounded-lg">
+            <div class="text-sm opacity-80">Longest Streak (No Robber)</div>
+            <div class="text-3xl font-bold">${longestStreak} rounds</div>
+          </div>
+          <div class="bg-gradient-to-br from-orange-600 to-orange-800 p-4 rounded-lg">
+            <div class="text-sm opacity-80">Average Round Duration</div>
+            <div class="text-3xl font-bold">${avgDuration}s</div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+          <h3 class="text-xl font-bold mb-4">Dice Roll Probability Analysis</h3>
+          <p class="text-sm text-gray-400 mb-4">Blue bars show actual rolls, gray bars show expected probability for fair 2d6 dice.</p>
+          ${probabilityChart}
+          <div class="mt-6 p-4 bg-red-900 bg-opacity-30 rounded border border-red-700">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-red-300">Robber (7s only accepted from round ${state.robberStartRound})</span>
+              <span class="text-2xl font-bold text-red-400">${sevenCount} times</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-gray-800 p-6 rounded-lg">
+          <h3 class="text-xl font-bold mb-4">Robber Dice Distribution</h3>
+          <p class="text-sm text-gray-400 mb-4">When a 7 is rolled the robbers are activated and two more D6s are rolled to determine where the robbers get placed. This shows the distribution of the robber placement dice.</p>
+          ${sevenCount > 0 ? robberDiceChart : '<p class="text-gray-500 text-center py-4">No robber activations yet</p>'}
+        </div>
+      `;
+    }
+
+    function renderSettingsContent() {
+      const timings = [
+        { key: '10sec', label: '10 seconds remaining' },
+        { key: '5sec', label: '5 seconds remaining' },
+        { key: '3sec', label: '3 seconds remaining' },
+        { key: '1sec', label: '1 second remaining' }
+      ];
+
+      return `
+        <div class="space-y-6">
+          <!-- Sound Settings -->
+          <div class="${UI_CONSTANTS.CSS_CLASSES.CARD_HEADER}">
+            <h2 class="text-xl font-bold mb-4 text-center bg-green-600 py-2 rounded">🔊 Sound Settings</h2>
+            
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD} space-y-6">
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="text-lg font-bold">Chimes</h3>
+                  <p class="text-sm text-gray-400">Play sound at specific times</p>
+                </div>
+                ${createButton({ 
+                  onclick: "toggleSetting('chimeEnabled')", 
+                  title: "Toggle chime sounds", 
+                  text: state.chimeEnabled ? 'ON' : 'OFF',
+                  classes: `px-6 py-3 rounded font-bold ${state.chimeEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`
+                })}
+              </div>
+              
+              <div>
+                <h4 class="text-md font-bold mb-2">Chime Timing</h4>
+                <div class="space-y-2">
+                  ${createTimingCheckboxes('chime', timings)}
+                </div>
+              </div>
+              
+              <div>
+                <h4 class="text-md font-bold mb-2">Volume (${state.chimeVolume}%)</h4>
+                <div class="flex items-center gap-4 mb-2">
+                  <span class="text-sm">🔇</span>
+                  <input type="range" min="0" max="100" step="10" value="${state.chimeVolume}" 
+                    oninput="updateSetting('chimeVolume', this.value)"
+                    class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                  <span class="text-sm">🔊</span>
+                </div>
+                <div class="text-center">
+                  ${createButton({ 
+                    onclick: "playChime()", 
+                    title: "Test chime sound", 
+                    text: "🔊 Test Chime",
+                    classes: "px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-bold"
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Vibration Settings -->
+          <div class="${UI_CONSTANTS.CSS_CLASSES.CARD_HEADER}">
+            <h2 class="text-xl font-bold mb-4 text-center bg-purple-600 py-2 rounded">📳 Vibration Settings</h2>
+            
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD}">
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <h3 class="text-lg font-bold">Vibration</h3>
+                  <p class="text-sm text-gray-400">Vibrate device during countdown</p>
+                </div>
+                ${createButton({ 
+                  onclick: "toggleSetting('vibrationEnabled')", 
+                  title: "Toggle vibration", 
+                  text: state.vibrationEnabled ? 'ON' : 'OFF',
+                  classes: `px-6 py-3 rounded font-bold ${state.vibrationEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`
+                })}
+              </div>
+              
+              <div>
+                <h4 class="text-md font-bold mb-2">Vibration Timing</h4>
+                <div class="space-y-2">
+                  ${createTimingCheckboxes('vibrate', timings)}
+                </div>
+                <div class="text-center mt-4">
+                  ${createButton({ 
+                    onclick: "testVibration()", 
+                    title: "Test vibration", 
+                    text: "📳 Test Vibration",
+                    classes: "px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-bold"
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Flash Settings -->
+          <div class="${UI_CONSTANTS.CSS_CLASSES.CARD_HEADER}">
+            <h2 class="text-xl font-bold mb-4 text-center bg-red-600 py-2 rounded">⚡ Flash Settings</h2>
+            
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD} space-y-6">
+              <!-- Flash Types -->
+              <div>
+                <h3 class="text-lg font-bold mb-2">Flash Types</h3>
+                <p class="text-sm text-gray-400 mb-3">Choose which flash types to enable (can select both)</p>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    ${createCheckbox('flashTextEnabled', 'Flash text', UI_CONSTANTS.CSS_CLASSES.CHECKBOX_LARGE)}
+                  </div>
+                  <div class="flex items-center gap-3">
+                    ${createCheckbox('flashFullscreenEnabled', 'Flash background', UI_CONSTANTS.CSS_CLASSES.CHECKBOX_LARGE)}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Flash Colour -->
+              <div>
+                <h3 class="text-lg font-bold mb-2">Fullscreen Flash Colour & Opacity</h3>
+                <p class="text-sm text-gray-400 mb-3">Customise fullscreen flash colour and intensity (text flash is always red)</p>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-4">
+                    <input type="color" value="${state.flashColor}" 
+                      onchange="updateSetting('flashColor', this.value)"
+                      class="w-12 h-12 rounded border-2 border-gray-600 cursor-pointer">
+                    <span class="text-white font-mono">${state.flashColor}</span>
+                    ${createButton({ onclick: `updateSetting('flashColor', '${UI_CONSTANTS.COLORS.FLASH_RED}')`, title: "Set to red", text: "Red", classes: "px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm" })}
+                    ${createButton({ onclick: "updateSetting('flashColor', '#ffff00')", title: "Set to yellow", text: "Yellow", classes: "px-3 py-1 bg-yellow-500 hover:bg-yellow-600 rounded text-sm" })}
+                    ${createButton({ onclick: "updateSetting('flashColor', '#ff8800')", title: "Set to orange", text: "Orange", classes: "px-3 py-1 bg-orange-500 hover:bg-orange-600 rounded text-sm" })}
+                  </div>
+                  <div>
+                    <label class="text-sm font-medium text-gray-300 mb-2 block">Opacity: ${state.flashOpacity}%</label>
+                    <div class="flex items-center gap-4">
+                      <span class="text-sm">Light</span>
+                      <input type="range" min="10" max="80" step="5" value="${state.flashOpacity}" 
+                        oninput="updateSetting('flashOpacity', this.value)"
+                        class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                      <span class="text-sm">Strong</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Flash Timing -->
+              <div>
+                <h3 class="text-lg font-bold mb-2">Flash Timing</h3>
+                <p class="text-sm text-gray-400 mb-3">Start flashing when time reaches (${state.flashThreshold} seconds)</p>
+                <div class="flex items-center gap-4">
+                  ${createButton({ 
+                    onclick: `updateSetting('flashThreshold', ${Math.max(1, state.flashThreshold - 1)})`, 
+                    title: "Decrease flash threshold", 
+                    text: "−",
+                    classes: "px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold"
+                  })}
+                  <div class="flex-1 text-center">
+                    <div class="text-2xl font-bold">${state.flashThreshold}s</div>
+                  </div>
+                  ${createButton({ 
+                    onclick: `updateSetting('flashThreshold', ${Math.min(15, state.flashThreshold + 1)})`, 
+                    title: "Increase flash threshold", 
+                    text: "+",
+                    classes: "px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold"
+                  })}
+                </div>
+              </div>
+              
+              <!-- Flash Speed -->
+              <div>
+                <h3 class="text-lg font-bold mb-2">Flash Speed</h3>
+                <p class="text-sm text-gray-400 mb-3">How fast the warning flash alternates</p>
+                <div class="flex items-center gap-4">
+                  <span class="text-sm">Slow</span>
+                  <input type="range" min="${GAME_CONFIG.FLASH_SPEEDS.MIN}" max="${GAME_CONFIG.FLASH_SPEEDS.MAX}" step="${GAME_CONFIG.FLASH_SPEEDS.STEP}" value="${GAME_CONFIG.FLASH_SPEEDS.MAX + GAME_CONFIG.FLASH_SPEEDS.MIN - state.flashSpeed}" 
+                    oninput="updateSetting('flashSpeed', ${GAME_CONFIG.FLASH_SPEEDS.MAX} + ${GAME_CONFIG.FLASH_SPEEDS.MIN} - this.value)"
+                    class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                  <span class="text-sm">Fast</span>
+                </div>
+                <div class="mt-2 text-center text-sm text-gray-400">
+                  Speed: ${state.flashSpeed < 500 ? 'Very Fast' : state.flashSpeed < 700 ? 'Fast' : state.flashSpeed < 900 ? 'Normal' : 'Slow'} (${state.flashSpeed}ms)
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Robber Settings -->
+          <div class="${UI_CONSTANTS.CSS_CLASSES.CARD_HEADER}">
+            <h2 class="text-xl font-bold mb-4 text-center bg-green-600 py-2 rounded">🎯 Robber Settings</h2>
+            
+            <div class="${UI_CONSTANTS.CSS_CLASSES.CARD}">
+              <h3 class="text-lg font-bold mb-2">Robber Activation Round</h3>
+              <p class="text-sm text-gray-400 mb-4">Which round the robber becomes active (currently: ${state.robberStartRound})</p>
+              <div class="flex items-center gap-4">
+                ${createButton({ 
+                  onclick: `updateSetting('robberStartRound', ${Math.max(1, state.robberStartRound - 1)})`, 
+                  title: "Decrease robber activation round", 
+                  text: "−",
+                  classes: "px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold text-xl"
+                })}
+                <div class="flex-1 text-center">
+                  <div class="text-4xl font-bold">${state.robberStartRound}</div>
+                </div>
+                ${createButton({ 
+                  onclick: `updateSetting('robberStartRound', ${Math.min(99, state.robberStartRound + 1)})`, 
+                  title: "Increase robber activation round", 
+                  text: "+",
+                  classes: "px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold text-xl"
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInfoContent() {
+      return `
+        <div class="space-y-6">
+          <!-- Keyboard Shortcuts -->
+          <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-4">⌨️ Keyboard Shortcuts</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                <span class="text-sm">Pause/Resume</span>
+                <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">SPACE</kbd>
+              </div>
+              <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                <span class="text-sm">Next Round</span>
+                <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">N</kbd>
+              </div>
+              <div class="flex justify-between items-center bg-gray-700 px-4 py-2 rounded">
+                <span class="text-sm">Open Stats</span>
+                <kbd class="px-3 py-1 bg-gray-900 rounded font-mono text-xs">S</kbd>
+              </div>
+            </div>
+          </div>
+          
+          <!-- About -->
+          <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-4">ℹ️ About Catan Connect</h3>
+            <p class="text-sm text-gray-300 mb-4">
+              A digital timer and dice roller for the mega game version of Catan known as <strong>Catan Connect</strong>. 
+              With multiple copies, this game can be played with an exponential number of people, although always at even numbers. 
+              Features automatic round progression, robber mechanics, statistics tracking, and customisable settings.
+            </p>
+            <p class="text-sm text-gray-300 mb-4">
+              <a href="https://boardgamegeek.com/boardgame/451387/catan-connect" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 underline">
+                View Catan Connect on BoardGameGeek →
+              </a>
+            </p>
+            <p class="text-xs text-gray-500">
+              Version 1.0 | Built with HTML, CSS & JavaScript
+            </p>
+          </div>
+          
+          <!-- Image -->
+          <div class="bg-gray-800 p-6 rounded-lg text-center">
+            <img src="Catan_Connect_Front_v1.png" alt="Catan Connect Front" class="w-full max-w-md mx-auto rounded-lg shadow-lg mb-4" onerror="this.style.display='none'">
+            <img src="Catan_Connect_Back_v1.png" alt="Catan Connect Back" class="w-full max-w-md mx-auto rounded-lg shadow-lg" onerror="this.style.display='none'">
+          </div>
+          
+          <!-- Teaching Script -->
+          <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-xl font-bold mb-4">📖 Teaching Script</h3>
+            <div class="text-sm text-gray-300 space-y-3 max-h-96 overflow-y-auto">
+              <p class="font-bold text-lg">Welcome to Catan Connect</p>
+              
+              <p>In this fast-paced mega game of Catan you will be racing to 18 points.</p>
+              
+              <p>Each round I will announce whether the moon-side or the sun side is active, and from round 11 onwards whether the robber is robbing.</p>
+              
+              <p>Each round will go for 30 seconds, although I can lengthen this if needed.</p>
+              
+              <p>Every player starts with 1 of each of the resources matching the hexes surrounding their city, and 4 points — 2 for their city and 2 for their two settlements.</p>
+              
+              <p>Each player starts on a region of their own, with a robber which can only be moved within your own region.</p>
+              
+              <p>Each time you build your first settlement into the region on your left or right you will gain 2 victory points, and you can mark that on your playmat.</p>
+              
+              <p class="font-bold">There are development tiles which can be purchased from either side of the game mat you are on. These include:</p>
+              
+              <ul class="list-disc list-inside space-y-2 ml-4">
+                <li><strong>Road Building (x1)</strong><br>When you play this tile, build 2 roads at no cost</li>
+                
+                <li><strong>Invention/Year of Plenty (x1)</strong><br>When you play this tile, take any 2 resources from the supply</li>
+                
+                <li><strong>Victory Point (x2)</strong><br>When you are the active player, you may reveal all your Victory Point tiles, including any purchased on that turn, if you can reach the number of VPs needed to win. Otherwise, keep Victory Point tiles face down in front of you</li>
+                
+                <li><strong>Knight (x5)</strong><br>When you play the Knight tile:<br>
+                Move the robber to the desert and take 1 resource corresponding to the hex where the robber was, OR;<br>
+                If the robber is already in the desert, it remains there and you may take 1 resource of your choice from the supply</li>
+              </ul>
+              
+              <p>If you and your direct opponent ever buy all the development tiles from your game mat, you may purchase them from a neighbour's supply.</p>
+              
+              <p>There should be banks of resources within everyone's reach. When a number is rolled that matches the number on a hex you built on, take the resource/s that matches (1 for a settlement and 2 for a city).</p>
+              
+              <p>If there are ever no resources available please throw your hand up so we can replenish the banks.</p>
+              
+              <p class="font-bold">A general turn goes like this:</p>
+              
+              <ol class="list-decimal list-inside space-y-2 ml-4">
+                <li>I will announce which side is active and what the dice roll is</li>
+                <li>All players will collect the resources as per the roll</li>
+                <li>All players can trade with the five people surrounding them</li>
+                <li>All players can trade at trading posts if they have built a settlement or a city there</li>
+                <li>If you are the active player and are at one of the ends you may also trade with the Market. At the market you may, once per turn, trade one resource for another resource at the market.</li>
+                <li>Active players can buy or build any roads, settlements, cities or development tiles</li>
+                <li>Active players can play 1 development tile which they have bought on a previous turn</li>
+                <li>The active player may reveal all their Victory Point tiles, including any purchased this turn, if they can reach the number of VPs needed to win</li>
+              </ol>
+              
+              <p class="font-bold">Sevens can only be rolled after the 11th round.</p>
+              
+              <p>When a robber is rolled you will need to move it to the number on your mat which corresponds with the number I give.</p>
+              
+              <p>The robber doesn't rob in this version of Catan. Instead its purpose is to block.</p>
+              
+              <p>You will have to halve your resource pool however if you have over 7 resources. This is rounded down, so if you have 9 resources you only have to get rid of 4.</p>
+              
+              <p class="font-bold">The competition of Longest Road and Largest Army is only between you and the person sharing your mat.</p>
+              
+              <p>For Longest Road you will need at least 5 of your roads connected, or, after that, more than the other player.</p>
+              
+              <p>For Largest Army you need to have played out at least 2 Knights, or, after that, more than the other player.</p>
+              
+              <p>If you gain either of these, mark the spot on your mat to claim it and move your point marker up 2 spaces.</p>
+              
+              <p>If your opponent takes this achievement from you, they will take your marker to mark on their side on the mat and you will need to put your point tracker down by 2 spaces.</p>
+              
+              <p>Because this is a fast paced game, mistakes will be made, and that is okay. Everyone will make a mistake at some point and the point is to have fun. If you ever need a moment to understand something though, please throw your hand up so I can pause the game.</p>
+              
+              <p class="font-bold text-lg">Does anyone have any questions?</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function OLD_RENDER_TO_REPLACE() {
+      const app = document.getElementById('app');
+
+      // Keep this function temporarily to avoid breaking while I replace content
+      // Remove after extracting all content render functions
+      
+      // Pause modal - different message if already paused
+      if (state.showPauseModal) {
+        if (state.isPaused) {
+          app.innerHTML = `
+            <div class="modal-overlay">
+              <div class="bg-gray-800 p-8 rounded-lg text-white text-center max-w-md">
+                <h2 class="text-2xl font-bold mb-4">Timer is Paused</h2>
+                <p class="mb-6">The timer is currently paused. Continue to view settings & statistics.</p>
+                <div class="flex gap-4 justify-center">
+                  <button onclick="handleStatsChoice(false)" class="px-6 py-3 bg-green-600 rounded hover:bg-green-700 font-bold">
+                    Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          app.innerHTML = `
+            <div class="modal-overlay">
+              <div class="bg-gray-800 p-8 rounded-lg text-white text-center max-w-md">
+                <h2 class="text-2xl font-bold mb-4">View Settings & Statistics</h2>
+                <p class="mb-6">Would you like to pause the game?</p>
+                <div class="flex gap-4 justify-center">
+                  <button onclick="handleStatsChoice(true)" class="px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 font-bold">
+                    Yes, Pause
+                  </button>
+                  <button onclick="handleStatsChoice(false)" class="px-6 py-3 bg-green-600 rounded hover:bg-green-700 font-bold">
+                    No, Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -664,20 +1920,25 @@
         // Navigation tabs with hover tooltips
         const tabs = `
           <div class="flex gap-2 mb-6 overflow-x-auto flex-wrap">
-            <button onclick="changeView('stats')" title="View game statistics and round history" class="px-4 py-2 rounded font-bold ${state.currentView === 'stats' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <!-- Stats Tab Button -->
+            <button onclick="changeView('stats')" title="Stats: View game statistics and round history" class="px-4 py-2 rounded font-bold ${state.currentView === 'stats' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               📊 Stats
             </button>
-            <button onclick="changeView('advanced')" title="View dice probability analysis and advanced metrics" class="px-4 py-2 rounded font-bold ${state.currentView === 'advanced' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <!-- Advanced Tab Button -->
+            <button onclick="changeView('advanced')" title="Advanced: View dice probability analysis and advanced metrics" class="px-4 py-2 rounded font-bold ${state.currentView === 'advanced' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               📈 Advanced
             </button>
-            <button onclick="changeView('settings')" title="Configure game settings and preferences" class="px-4 py-2 rounded font-bold ${state.currentView === 'settings' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <!-- Settings Tab Button -->
+            <button onclick="changeView('settings')" title="Settings: Configure game settings and preferences" class="px-4 py-2 rounded font-bold ${state.currentView === 'settings' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               ⚙️ Settings
             </button>
-            <button onclick="changeView('info')" title="View keyboard shortcuts, rules, and about information" class="px-4 py-2 rounded font-bold ${state.currentView === 'info' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
+            <!-- Info Tab Button -->
+            <button onclick="changeView('info')" title="Info: View keyboard shortcuts, rules, and about information" class="px-4 py-2 rounded font-bold ${state.currentView === 'info' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}">
               ℹ️ Info
             </button>
-            <button onclick="showNewGameConfirm()" title="Start a new game and reset all statistics" class="px-4 py-2 rounded font-bold bg-red-600 hover:bg-red-700">
-              🔄 New Game
+            <!-- Start Screen Button -->
+            <button onclick="showNewGameConfirm()" title="Start Screen: Go to start screen to begin a new game" class="px-4 py-2 rounded font-bold bg-orange-600 hover:bg-orange-700">
+              🏠 Start Screen
             </button>
           
           </div>
@@ -758,14 +2019,18 @@
         else if (state.currentView === 'advanced') {
           // Calculate advanced stats
           const diceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 9:0, 10:0, 11:0, 12:0};
-          const robberDiceCounts = {2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0};
+          const robberDiceCounts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 9:0, 10:0, 11:0, 12:0};
           let sevenCount = 0;
           
           state.roundLog.forEach(log => {
             if (log.dice === 7) {
               sevenCount++;
-              if (log.robber && log.robber !== 'Desert') {
-                robberDiceCounts[log.robber] = (robberDiceCounts[log.robber] || 0) + 1;
+              if (log.robber) {
+                if (log.robber === 'Desert') {
+                  robberDiceCounts[7] = (robberDiceCounts[7] || 0) + 1;
+                } else {
+                  robberDiceCounts[log.robber] = (robberDiceCounts[log.robber] || 0) + 1;
+                }
               }
             } else {
               diceCounts[log.dice] = (diceCounts[log.dice] || 0) + 1;
@@ -812,7 +2077,7 @@
                   </span>
                 </div>
                 <div class="relative h-8 bg-gray-700 rounded overflow-hidden">
-                  <div class="absolute h-full bg-gray-500 opacity-30" style="width: ${expected}%"></div>
+                  <div class="absolute h-full bg-orange-300 opacity-60" style="width: ${expected}%"></div>
                   <div class="absolute h-full bg-blue-500" style="width: ${actual}%"></div>
                   <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
                     ${diceCounts[num]} rolls
@@ -822,21 +2087,6 @@
             `;
           }).join('');
           
-          const robberDiceChart = Object.keys(robberDiceCounts).map(num => {
-            const count = robberDiceCounts[num];
-            const displayNum = num === '7' ? 'Desert' : num;
-            return `
-              <div class="mb-3">
-                <div class="flex justify-between mb-1">
-                  <span class="font-bold">${displayNum}</span>
-                  <span class="text-sm text-red-400">${count} times</span>
-                </div>
-                <div class="relative h-6 bg-gray-700 rounded overflow-hidden">
-                  <div class="absolute h-full bg-red-500" style="width: ${sevenCount > 0 ? (count / sevenCount * 100) : 0}%"></div>
-                </div>
-              </div>
-            `;
-          }).join('');
           
           content = `
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -862,11 +2112,6 @@
               </div>
             </div>
             
-            <div class="bg-gray-800 p-6 rounded-lg">
-              <h3 class="text-xl font-bold mb-4">Robber Dice Distribution</h3>
-              <p class="text-sm text-gray-400 mb-4">When a 7 is rolled, this shows the distribution of the robber placement dice.</p>
-              ${sevenCount > 0 ? robberDiceChart : '<p class="text-gray-500 text-center py-4">No robber activations yet</p>'}
-            </div>
           `;
         }
         
@@ -982,6 +2227,11 @@
                         <span class="text-white">1 second remaining</span>
                       </label>
                     </div>
+                    <div class="text-center mt-4">
+                      <button onclick="testVibration()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-bold">
+                        📳 Test Vibration
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -990,18 +2240,89 @@
               <div class="bg-gray-700 p-1 rounded-lg">
                 <h2 class="text-xl font-bold mb-4 text-center bg-red-600 py-2 rounded">⚡ Flash Settings</h2>
                 
-                <div class="bg-gray-800 p-6 rounded-lg">
-                  <h3 class="text-lg font-bold mb-2">Flash Speed</h3>
-                  <p class="text-sm text-gray-400 mb-4">How fast the warning flash alternates (${state.flashSpeed}ms)</p>
-                  <div class="flex items-center gap-4">
-                    <span class="text-sm">Slow</span>
-                    <input type="range" min="300" max="1000" step="100" value="${state.flashSpeed}" 
-                      oninput="updateSetting('flashSpeed', this.value)"
-                      class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-                    <span class="text-sm">Fast</span>
+                <div class="bg-gray-800 p-6 rounded-lg space-y-6">
+                  <!-- Flash Types -->
+                  <div>
+                    <h3 class="text-lg font-bold mb-2">Flash Types</h3>
+                    <p class="text-sm text-gray-400 mb-3">Choose which flash types to enable (can select both)</p>
+                    <div class="space-y-3">
+                      <div class="flex items-center gap-3">
+                        <input type="checkbox" ${state.flashTextEnabled ? 'checked' : ''} 
+                          onchange="toggleSetting('flashTextEnabled')" 
+                          class="w-5 h-5 text-red-600 bg-gray-700 border-gray-600 rounded">
+                        <div class="flex-1">
+                          <span class="text-white font-bold">📝 Text Flash</span>
+                          <p class="text-sm text-gray-400">Flash dice, timer, and labels in red</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <input type="checkbox" ${state.flashFullscreenEnabled ? 'checked' : ''} 
+                          onchange="toggleSetting('flashFullscreenEnabled')" 
+                          class="w-5 h-5 text-red-600 bg-gray-700 border-gray-600 rounded">
+                        <div class="flex-1">
+                          <span class="text-white font-bold">📺 Fullscreen Flash</span>
+                          <p class="text-sm text-gray-400">Flash entire screen with custom colour</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="mt-2 text-center text-sm text-gray-400">
-                    ${state.flashSpeed < 500 ? 'Very Fast' : state.flashSpeed < 700 ? 'Fast' : state.flashSpeed < 900 ? 'Normal' : 'Slow'}
+                  
+                  <!-- Fullscreen Flash Colour -->
+                  <div>
+                    <h3 class="text-lg font-bold mb-2">Fullscreen Flash Colour & Opacity</h3>
+                    <p class="text-sm text-gray-400 mb-3">Customise fullscreen flash colour and intensity (text flash is always red)</p>
+                    <div class="space-y-3">
+                      <div class="flex items-center gap-4">
+                        <input type="color" value="${state.flashColor}" 
+                          onchange="updateSetting('flashColor', this.value)"
+                          class="w-12 h-12 rounded border-2 border-gray-600 cursor-pointer">
+                        <span class="text-white font-mono">${state.flashColor}</span>
+                        <button onclick="updateSetting('flashColor', '#ff0000')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">Red</button>
+                        <button onclick="updateSetting('flashColor', '#ffff00')" class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 rounded text-sm">Yellow</button>
+                        <button onclick="updateSetting('flashColor', '#ff8800')" class="px-3 py-1 bg-orange-500 hover:bg-orange-600 rounded text-sm">Orange</button>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Opacity: ${state.flashOpacity}%</label>
+                        <div class="flex items-center gap-4">
+                          <span class="text-sm">Light</span>
+                          <input type="range" min="10" max="80" step="5" value="${state.flashOpacity}" 
+                            oninput="updateSetting('flashOpacity', this.value)"
+                            class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                          <span class="text-sm">Strong</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Flash Timing -->
+                  <div>
+                    <h3 class="text-lg font-bold mb-2">Flash Timing</h3>
+                    <p class="text-sm text-gray-400 mb-3">Start flashing when time reaches (${state.flashThreshold} seconds)</p>
+                    <div class="flex items-center gap-4">
+                      <button onclick="updateSetting('flashThreshold', ${Math.max(1, state.flashThreshold - 1)})"
+                        class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold">−</button>
+                      <div class="flex-1 text-center">
+                        <div class="text-2xl font-bold">${state.flashThreshold}s</div>
+                      </div>
+                      <button onclick="updateSetting('flashThreshold', ${Math.min(15, state.flashThreshold + 1)})"
+                        class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded font-bold">+</button>
+                    </div>
+                  </div>
+                  
+                  <!-- Flash Speed -->
+                  <div>
+                    <h3 class="text-lg font-bold mb-2">Flash Speed</h3>
+                    <p class="text-sm text-gray-400 mb-3">How fast the warning flash alternates</p>
+                    <div class="flex items-center gap-4">
+                      <span class="text-sm">Slow</span>
+                      <input type="range" min="${GAME_CONFIG.FLASH_SPEEDS.MIN}" max="${GAME_CONFIG.FLASH_SPEEDS.MAX}" step="${GAME_CONFIG.FLASH_SPEEDS.STEP}" value="${GAME_CONFIG.FLASH_SPEEDS.MAX + GAME_CONFIG.FLASH_SPEEDS.MIN - state.flashSpeed}" 
+                        oninput="updateSetting('flashSpeed', ${GAME_CONFIG.FLASH_SPEEDS.MAX} + ${GAME_CONFIG.FLASH_SPEEDS.MIN} - this.value)"
+                        class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                      <span class="text-sm">Fast</span>
+                    </div>
+                    <div class="mt-2 text-center text-sm text-gray-400">
+                      Speed: ${state.flashSpeed < 500 ? 'Very Fast' : state.flashSpeed < 700 ? 'Fast' : state.flashSpeed < 900 ? 'Normal' : 'Slow'} (${state.flashSpeed}ms)
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1155,21 +2476,46 @@
           `;
         }
 
+        // Store current scroll position before render
+        const scrollContainer = document.querySelector('.overflow-y-auto');
+        const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+        
         app.innerHTML = `
-          <div class="min-h-screen flex flex-col items-center justify-start bg-gray-900 text-white p-4 md:p-6" style="position: relative; z-index: 9999;">
-            <div class="w-full max-w-4xl">
+          <div class="min-h-screen max-h-screen flex flex-col items-center justify-start bg-gray-900 text-white overflow-hidden" style="position: relative; z-index: 9999;">
+            <div class="flex-shrink-0 p-4 md:p-6 w-full max-w-4xl">
               <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-                <h1 class="text-3xl md:text-4xl font-bold">Catan Connect</h1>
-                <button onclick="closeStats()" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm md:text-base">
+                <div class="flex flex-col">
+                  <h1 class="text-3xl md:text-4xl font-bold">Catan Connect</h1>
+                  ${state.diceNumber !== null ? `
+                    <div class="text-lg text-gray-300 mt-1" style="font-size: 1.4em;">
+                      <span class="font-bold text-yellow-300">Round ${state.round}</span> • 
+                      <span class="font-mono font-bold ${state.timeLeft <= 5 ? 'text-red-400' : 'text-white'}">${Math.floor(state.timeLeft / 60)}:${String(state.timeLeft % 60).padStart(2,'0')}</span> 
+                      <span class="text-gray-400">${state.isPaused ? '(PAUSED)' : 'remaining'}</span>
+                    </div>
+                  ` : ''}
+                </div>
+                <!-- Back to Game Button -->
+                <button onclick="closeStats()" title="Back to Game: Return to the main game screen" class="px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 text-base md:text-lg font-bold">
                   ← Back to Game
                 </button>
               </div>
-              
               ${tabs}
-              ${content}
+            </div>
+            <div class="flex-1 overflow-y-auto px-4 md:p-6 pb-4 md:pb-6 w-full" id="statsScrollContainer">
+              <div class="w-full max-w-4xl mx-auto">
+                ${content}
+              </div>
             </div>
           </div>
         `;
+        
+        // Restore scroll position after render
+        setTimeout(() => {
+          const newScrollContainer = document.getElementById('statsScrollContainer');
+          if (newScrollContainer && scrollTop > 0) {
+            newScrollContainer.scrollTop = scrollTop;
+          }
+        }, 0);
         return;
       }
 
@@ -1179,10 +2525,11 @@
           <div class="min-h-screen flex items-center justify-center bg-warning">
             <div class="text-center bg-black bg-opacity-50 p-12 rounded-lg">
               <div class="text-6xl font-bold text-white mb-4 animate-pulse">⚠️ WARNING ⚠️</div>
-              <div class="text-4xl font-bold text-white mb-2">ROBBER IS NOW ACTIVE</div>
+              <div class="text-4xl font-bold text-white mb-2">THE ROBBERS ARE NOW ACTIVE</div>
               <div class="text-xl text-white mb-8">Rounds will be increased by 10 seconds</div>
-              <button onclick="skipWarning()" class="px-8 py-4 bg-white text-2xl font-bold text-green-700 rounded-lg hover:bg-gray-100">
-                SKIP
+              <!-- Continue Button -->
+              <button onclick="skipWarning()" title="Continue: Continue with robber active" class="px-8 py-4 bg-white text-2xl font-bold text-green-700 rounded-lg hover:bg-gray-100">
+                Continue Game
               </button>
             </div>
           </div>
@@ -1202,25 +2549,47 @@
 
       // Start screen
       if (state.diceNumber === null) {
+        // Check if there's a saved game to continue
+        const hasSavedGame = state.roundLog.length > 0 || localStorage.getItem('catanTimerState');
+        
         app.innerHTML = `
           <div class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-600 to-amber-700 gap-8 p-6">
             <h1 class="text-6xl font-bold text-white mb-4">Catan Connect</h1>
             
             <div class="flex items-center gap-4 bg-black bg-opacity-40 px-6 py-3 rounded-lg text-white">
-              <button onclick="adjustRoundTime(-5)" class="text-3xl font-bold hover:text-gray-300 px-3">−</button>
+              <!-- Decrease Timer Button -->
+              <button onclick="adjustRoundTime(-5)" title="Decrease Timer: Decrease round time" class="text-3xl font-bold hover:text-gray-300 px-3">−</button>
               <div class="text-2xl font-bold">${state.roundTime}s per round</div>
-              <button onclick="adjustRoundTime(5)" class="text-3xl font-bold hover:text-gray-300 px-3">+</button>
+              <!-- Increase Timer Button -->
+              <button onclick="adjustRoundTime(5)" title="Increase Timer: Increase round time" class="text-3xl font-bold hover:text-gray-300 px-3">+</button>
             </div>
 
-            <button onclick="handleStart()" class="px-12 py-6 bg-white text-4xl font-bold text-orange-700 rounded-lg hover:bg-gray-100">START GAME</button>
+            <div class="flex flex-col gap-4 w-full max-w-md">
+              ${hasSavedGame ? `
+                <!-- Continue Game Button -->
+                <button onclick="handleContinueGame()" title="Continue Game: Resume from saved game state" class="px-8 py-4 bg-green-600 text-2xl font-bold text-white rounded-lg hover:bg-green-700 shadow-lg">
+                  🔄 CONTINUE GAME
+                </button>
+                <div class="text-center text-white text-sm opacity-90">
+                  Resume from Round ${state.round}${state.roundLog.length > 0 ? ` • ${state.roundLog.length} rounds played` : ''}
+                </div>
+                <div class="border-t border-white opacity-30 my-2"></div>
+              ` : ''}
+              
+              <!-- New Game Button -->
+              <button onclick="confirmNewGame()" title="New Game: Start a completely fresh game" class="px-8 py-4 bg-white text-2xl font-bold text-orange-700 rounded-lg hover:bg-gray-100 shadow-lg">
+                ✨ START NEW GAME
+              </button>
+            </div>
 
-<p class="text-center">Don't worry — your game saves automatically!<br>If you need to start a new game click the Settings & Stats button below
-            <p>
-              
-             <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl px-6 font-bold text-orange-700 bg-black py-1 rounded-lg hover:text-gray-300 flex items-center gap-2"> Settings & Statistics <span style="font-size: 1.2em;">⚙️/📊</span></button>
-              
-              
-              </p>
+            <p class="text-center text-white opacity-90">
+              Don't worry — your game saves automatically!
+            </p>
+
+            <!-- Settings Button -->
+            <button onclick="showStatsPrompt()" title="Settings: View stats, settings, and game info" class="text-lg md:text-xl px-6 py-2 font-bold text-orange-700 bg-black bg-opacity-100 rounded-lg hover:bg-opacity-60 flex items-center gap-2 transition-all"> 
+              Settings & Statistics <span style="font-size: 1.2em;">⚙️📊</span>
+            </button>
 
           </div>
         `;
@@ -1228,27 +2597,40 @@
       }
 
       // Main playing view
-      const bgClass = state.round % 2 === 0 ? "bg-moon" : "bg-sun";
+      let bgClass = state.round % 2 === 0 ? "bg-moon" : "bg-sun";
+      if (state.isPaused) {
+        bgClass = "bg-gray-600"; // Grey background when paused
+      }
       const minutes = String(Math.floor(state.timeLeft / 60)).padStart(2,'0');
       const seconds = String(state.timeLeft % 60).padStart(2,'0');
+      
+      // Calculate current round length (includes robber bonus if applicable)
+      const currentRoundLength = state.round >= GAME_CONFIG.ROBBER_START_ROUND ? 
+        state.roundTime + GAME_CONFIG.ROBBER_TIME_BONUS : 
+        state.roundTime;
 
       // Robber case - NO round number displayed
       if (state.diceNumber === 7 && state.round >= 11 && state.robberNumber !== null) {
-        const robberDisplay = state.robberNumber === 'Desert' ? 'Desert' : state.robberNumber;
+        const robberDisplay = state.robberNumber === 'Desert' ? 'DESERT (7)' : state.robberNumber;
+        const robberBgClass = state.isPaused ? "bg-gray-600" : "bg-warning";
         app.innerHTML = `
-          <div class="flex flex-col min-h-screen bg-warning text-white" style="position: relative;">
+          <div class="flex flex-col min-h-screen ${robberBgClass} text-white" style="position: relative;">
             <div style="position: relative; z-index: 10;">
               <div class="absolute top-4 md:top-8 left-4 md:left-8 flex items-center gap-2 md:gap-4 bg-black bg-opacity-40 px-3 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base">
-                <button onclick="adjustRoundTime(-5)" title="Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
-                <div class="text-lg md:text-2xl font-bold">${state.roundTime}s</div>
-                <button onclick="adjustRoundTime(5)" title="Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
+                <!-- Decrease Timer Button -->
+                <button onclick="adjustRoundTime(-5)" title="Decrease Timer: Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
+                <div class="text-lg md:text-2xl font-bold">${currentRoundLength}s</div>
+                <!-- Increase Timer Button -->
+                <button onclick="adjustRoundTime(5)" title="Increase Timer: Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
-                <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
-                <button onclick="toggleFullscreen()" title="Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
+                <!-- Menu Button -->
+                <button onclick="showStatsPrompt()" title="Menu: For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
+                <!-- Fullscreen Button -->
+                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
-                <div class="dice-circle w-full">
+                <div class="shaded-rectangle w-full">
                   <div class="robber-label font-bold text-center" style="font-size: clamp(5.2rem, 13vw, 9.1rem); line-height:1.1;">
                     ROBBER ON<br>${robberDisplay}
                   </div>
@@ -1260,11 +2642,25 @@
                 <div class="timer-text font-mono font-bold mt-4 md:mt-8" style="font-size: clamp(3rem, 10vw, 7rem);">${minutes}:${seconds}</div>
 
                 <div class="flex gap-4 md:gap-6 mt-4 md:mt-6">
-                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume timer' : 'Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
-                  <button onclick="handleNext()" title="Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
+                  <!-- Pause/Resume Button -->
+                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume: Resume timer' : 'Pause: Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
+                  <!-- Next Round Button -->
+                  <button onclick="handleNext()" title="Next Round: Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
                 </div>
               </div>
             </div>
+            
+            <!-- Paused Overlay -->
+            ${state.isPaused ? `
+              <div class="absolute inset-0 flex items-center justify-between px-8 md:px-16 pointer-events-none" style="z-index: 20;">
+                <div class="text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">
+                  PAUSED
+                </div>
+                <div class="text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">
+                  PAUSED
+                </div>
+              </div>
+            ` : ''}
           </div>
         `;
       } else {
@@ -1276,19 +2672,23 @@
           <div class="flex flex-col min-h-screen ${bgClass} text-white" style="position: relative;">
             <div style="position: relative; z-index: 10;">
               <div class="absolute top-4 md:top-8 left-4 md:left-8 flex items-center gap-2 md:gap-4 bg-black bg-opacity-40 px-3 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base">
-                <button onclick="adjustRoundTime(-5)" title="Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
-                <div class="text-lg md:text-2xl font-bold" title="Current round time setting">${state.roundTime}s</div>
-                <button onclick="adjustRoundTime(5)" title="Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
+                <!-- Decrease Timer Button -->
+                <button onclick="adjustRoundTime(-5)" title="Decrease Timer: Decrease round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">−</button>
+                <div class="text-lg md:text-2xl font-bold" title="Current round time setting">${currentRoundLength}s</div>
+                <!-- Increase Timer Button -->
+                <button onclick="adjustRoundTime(5)" title="Increase Timer: Increase round time" class="text-xl md:text-3xl font-bold hover:text-gray-300 px-2 md:px-3">+</button>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
                 <div class="round-number text-lg md:text-2xl font-bold" title="Current round number">R${state.round}</div>
                 <div class="h-6 w-px bg-white opacity-30 mx-1 md:mx-2"></div>
-                <button onclick="showStatsPrompt()" title="For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
-                <button onclick="toggleFullscreen()" title="Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
+                <!-- Menu Button -->
+                <button onclick="showStatsPrompt()" title="Menu: For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
+                <!-- Fullscreen Button -->
+                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
                 <div class="flex flex-col items-center gap-4 md:gap-8 clamp-center w-full">
-                  <div class="dice-circle w-full" title="Current dice roll">
+                  <div class="shaded-rectangle w-full" title="Current dice roll">
                     <div class="dice-number font-bold">${state.diceNumber}</div>
                     <div class="${activeLabelClass} active-label font-bold" title="Current phase indicator" style="font-size: clamp(3rem, 8vw, 6rem);">${activeLabel}</div>
                   </div>
@@ -1296,11 +2696,25 @@
                 </div>
 
                 <div class="flex gap-4 md:gap-6 mt-4 md:mt-6">
-                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume timer' : 'Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
-                  <button onclick="handleNext()" title="Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
+                  <!-- Pause/Resume Button -->
+                  <button onclick="togglePause()" title="${state.isPaused ? 'Resume: Resume timer' : 'Pause: Pause timer'}" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">${state.isPaused ? '▶' : '⏸'}</button>
+                  <!-- Next Round Button -->
+                  <button onclick="handleNext()" title="Next Round: Skip to next round" class="p-4 md:p-6 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all text-2xl md:text-4xl">⏭</button>
                 </div>
               </div>
             </div>
+            
+            <!-- Paused Overlay -->
+            ${state.isPaused ? `
+              <div class="absolute inset-0 flex items-center justify-between px-8 md:px-16 pointer-events-none" style="z-index: 20;">
+                <div class="text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">
+                  PAUSED
+                </div>
+                <div class="text-6xl md:text-8xl font-bold text-white opacity-80 animate-pulse">
+                  PAUSED
+                </div>
+              </div>
+            ` : ''}
           </div>
         `;
       }
@@ -1314,6 +2728,45 @@
     
     // Initialize chime audio
     initChime();
+    
+    // Helper function to reset to default state
+    function resetToDefaultState() {
+      state.round = 1;
+      state.roundTime = GAME_CONFIG.DEFAULT_ROUND_TIME;
+      state.timeLeft = GAME_CONFIG.DEFAULT_ROUND_TIME;
+      state.isPaused = true;
+      state.diceNumber = null;
+      state.robberNumber = null;
+      state.showWarning = false;
+      state.countdownPhase = false;
+      state.roundLog = [];
+      state.roundStartTime = null;
+    }
+    
+    // Cleanup function to prevent memory leaks
+    function cleanup() {
+      stopTimerAndFlash();
+      if (state.currentCountdownInterval) {
+        clearInterval(state.currentCountdownInterval);
+        state.currentCountdownInterval = null;
+      }
+      if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
+      }
+      saveState(); // Save final state before cleanup
+    }
+    
+    // Add cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+    window.addEventListener('pagehide', cleanup);
+    
+    // Add periodic auto-save every 5 seconds during active gameplay
+    let autoSaveInterval = setInterval(() => {
+      if (!state.isPaused && state.diceNumber !== null) {
+        saveState();
+      }
+    }, 5000);
     
     render();
     
