@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Icon Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .instructions {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      border-left: 4px solid #2196f3;
+    }
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-area:hover {
+      border-color: #2196f3;
+      background: #f8f9fa;
+    }
+    .upload-area.dragover {
+      border-color: #2196f3;
+      background: #e3f2fd;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    button {
+      background: #2196f3;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #1976d2;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .preview-area {
+      margin: 20px 0;
+      display: none;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .preview-item {
+      text-align: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .preview-item canvas {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      max-width: 100%;
+    }
+    .preview-item p {
+      margin: 10px 0 0 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      border-left: 4px solid #28a745;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 PWA Icon Generator</h1>
+    <p>Generate all required PWA icons from your Catan logo</p>
+
+    <div class="instructions">
+      <strong>📋 Instructions:</strong>
+      <ol>
+        <li>Upload your "catan logo.png" image below</li>
+        <li>Click "Generate Icons" to create all sizes</li>
+        <li>Download each icon and save to the Catan Connect folder</li>
+        <li>Icons will be properly sized: 192x192, 512x512, and maskable versions</li>
+      </ol>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+      <p>📁 Click or drag your logo image here</p>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div id="preview-area" class="preview-area">
+      <h3>Preview:</h3>
+      <img id="sourcePreview" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px;">
+      <br><br>
+      <button id="generateBtn" disabled>Generate All Icons</button>
+    </div>
+
+    <div id="icons-area" style="display: none;">
+      <h3>Generated Icons:</h3>
+      <div class="preview-grid" id="iconGrid"></div>
+      <button onclick="downloadAll()">💾 Download All Icons</button>
+    </div>
+
+    <div class="success" id="successMessage">
+      ✅ All icons generated successfully! Click the download buttons below each icon.
+    </div>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewArea = document.getElementById('preview-area');
+    const sourcePreview = document.getElementById('sourcePreview');
+    const generateBtn = document.getElementById('generateBtn');
+    const iconsArea = document.getElementById('icons-area');
+    const iconGrid = document.getElementById('iconGrid');
+    const successMessage = document.getElementById('successMessage');
+
+    let sourceImage = null;
+
+    // Upload area events
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        sourceImage = new Image();
+        sourceImage.onload = () => {
+          sourcePreview.src = e.target.result;
+          previewArea.style.display = 'block';
+          generateBtn.disabled = false;
+        };
+        sourceImage.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    generateBtn.addEventListener('click', generateIcons);
+
+    function generateIcons() {
+      if (!sourceImage) return;
+
+      iconGrid.innerHTML = '';
+
+      // Icon configurations
+      const icons = [
+        { size: 192, name: 'icon-192.png', maskable: false },
+        { size: 512, name: 'icon-512.png', maskable: false },
+        { size: 192, name: 'icon-maskable-192.png', maskable: true },
+        { size: 512, name: 'icon-maskable-512.png', maskable: true }
+      ];
+
+      icons.forEach(config => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = config.size;
+        canvas.height = config.size;
+
+        if (config.maskable) {
+          // Maskable icons need safe zone (80% of total size in center)
+          // Fill background with orange (Catan theme)
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(0, 0, config.size, config.size);
+
+          // Draw image in safe zone (80% centered)
+          const safeZoneSize = config.size * 0.7;
+          const offset = (config.size - safeZoneSize) / 2;
+          ctx.drawImage(sourceImage, offset, offset, safeZoneSize, safeZoneSize);
+        } else {
+          // Regular icons - white background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, config.size, config.size);
+
+          // Draw image with 10% padding
+          const padding = config.size * 0.1;
+          const imageSize = config.size - (padding * 2);
+          ctx.drawImage(sourceImage, padding, padding, imageSize, imageSize);
+        }
+
+        // Create preview
+        const previewItem = document.createElement('div');
+        previewItem.className = 'preview-item';
+
+        const displayCanvas = canvas.cloneNode();
+        displayCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        displayCanvas.width = 150;
+        displayCanvas.height = 150;
+        displayCanvas.style.width = '150px';
+        displayCanvas.style.height = '150px';
+        const smallCtx = displayCanvas.getContext('2d');
+        smallCtx.drawImage(canvas, 0, 0, 150, 150);
+
+        const description = document.createElement('p');
+        description.innerHTML = `<strong>${config.name}</strong><br>${config.size}x${config.size}px${config.maskable ? '<br>(Maskable)' : ''}`;
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.textContent = 'Download';
+        downloadBtn.style.marginTop = '10px';
+        downloadBtn.onclick = () => downloadIcon(canvas, config.name);
+
+        previewItem.appendChild(displayCanvas);
+        previewItem.appendChild(description);
+        previewItem.appendChild(downloadBtn);
+        iconGrid.appendChild(previewItem);
+      });
+
+      iconsArea.style.display = 'block';
+      successMessage.style.display = 'block';
+    }
+
+    function downloadIcon(canvas, filename) {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }
+
+    function downloadAll() {
+      const buttons = iconGrid.querySelectorAll('button');
+      buttons.forEach((btn, index) => {
+        setTimeout(() => btn.click(), index * 500);
+      });
+    }
+  </script>
+</body>
+</html>

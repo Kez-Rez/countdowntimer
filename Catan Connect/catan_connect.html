@@ -3,11 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#f59e0b" />
+  <meta name="description" content="Official countdown timer for Catan Connect board game with dice rolling, round management, and statistics tracking" />
   <title>Catan Connect</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- App Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- Tailwind CSS - Local fallback for offline use -->
+  <script src="tailwind.standalone.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Offline fallback notice -->
+  <!-- Service Worker Registration & PWA Support -->
   <script>
-    // Simple offline detection and graceful fallback
+    // Register service worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered successfully:', registration.scope);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install button
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) {
+        installBtn.style.display = 'block';
+      }
+    });
+
+    // Handle PWA install
+    function installPWA() {
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (!deferredPrompt) {
+        return;
+      }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        deferredPrompt = null;
+        if (installBtn) {
+          installBtn.style.display = 'none';
+        }
+      });
+    }
+
+    // Offline detection and graceful fallback
     window.addEventListener('load', () => {
       // Check if Tailwind loaded properly
       setTimeout(() => {
@@ -16,10 +71,9 @@
         document.body.appendChild(testElement);
         const hasColor = window.getComputedStyle(testElement).backgroundColor === 'rgb(59, 130, 246)';
         document.body.removeChild(testElement);
-        
+
         if (!hasColor && !window.tailwindCSSLoaded) {
-          console.warn('Tailwind CSS failed to load - app may not look correct offline');
-          // Could show a simple notice to user if desired
+          console.warn('Tailwind CSS failed to load - using local fallback');
         }
       }, 100);
     });
@@ -1204,12 +1258,22 @@
           </div>
 
 
-          ${createButton({ 
-            onclick: "showStatsPrompt()", 
-            title: "Settings: View stats, settings, and game info", 
+          ${createButton({
+            onclick: "showStatsPrompt()",
+            title: "Settings: View stats, settings, and game info",
             text: "Settings & Statistics ⚙️📊",
             classes: "text-lg md:text-xl px-6 py-2 font-bold text-orange-700 bg-black bg-opacity-100 rounded-lg hover:bg-opacity-60 flex items-center gap-2 transition-all"
           })}
+
+          <!-- PWA Install Button (shown when installable) -->
+          <button
+            id="pwa-install-btn"
+            onclick="installPWA()"
+            style="display: none;"
+            title="Install app to your device for offline use"
+            class="text-lg md:text-xl px-6 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-lg transition-all flex items-center justify-center gap-2">
+            📱 Install App (Works Offline)
+          </button>
         </div>
       `;
     }
@@ -1310,9 +1374,9 @@
             classes: "text-lg md:text-2xl font-bold hover:text-gray-300"
           })}
           ${createButton({ 
-            onclick: "toggleFullscreen()", 
-            title: "Fullscreen: Toggle fullscreen", 
-            text: "🖵",
+            onclick: "toggleFullscreen()",
+            title: "Fullscreen: Toggle fullscreen",
+            text: "⛶",
             classes: "text-lg md:text-2xl font-bold hover:text-gray-300"
           })}
         </div>
@@ -2626,7 +2690,7 @@
                 <!-- Menu Button -->
                 <button onclick="showStatsPrompt()" title="Menu: For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
                 <!-- Fullscreen Button -->
-                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
+                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">⛶</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">
@@ -2683,7 +2747,7 @@
                 <!-- Menu Button -->
                 <button onclick="showStatsPrompt()" title="Menu: For stats, info, settings, or to start a new game" class="text-lg md:text-2xl font-bold hover:text-gray-300">⚙️/📊</button>
                 <!-- Fullscreen Button -->
-                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">🖵</button>
+                <button onclick="toggleFullscreen()" title="Fullscreen: Toggle fullscreen" class="text-lg md:text-2xl font-bold hover:text-gray-300">⛶</button>
               </div>
 
               <div class="flex-1 flex flex-col items-center justify-center px-4" style="min-height: 100vh;">

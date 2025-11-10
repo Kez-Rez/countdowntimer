@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head><title>Creating Icons...</title></head>
+<body>
+<h2>Generating icons...</h2>
+<script>
+// Create 192x192 icon
+const canvas192 = document.createElement('canvas');
+canvas192.width = 192;
+canvas192.height = 192;
+const ctx192 = canvas192.getContext('2d');
+
+// Orange background (Catan theme)
+ctx192.fillStyle = '#f59e0b';
+ctx192.fillRect(0, 0, 192, 192);
+
+// White text
+ctx192.fillStyle = '#ffffff';
+ctx192.font = 'bold 60px Arial';
+ctx192.textAlign = 'center';
+ctx192.textBaseline = 'middle';
+ctx192.fillText('CATAN', 96, 70);
+ctx192.font = 'bold 45px Arial';
+ctx192.fillText('CONNECT', 96, 130);
+
+// Download 192
+canvas192.toBlob(blob => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'icon-192.png';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Create 512x512 icon
+const canvas512 = document.createElement('canvas');
+canvas512.width = 512;
+canvas512.height = 512;
+const ctx512 = canvas512.getContext('2d');
+
+ctx512.fillStyle = '#f59e0b';
+ctx512.fillRect(0, 0, 512, 512);
+
+ctx512.fillStyle = '#ffffff';
+ctx512.font = 'bold 160px Arial';
+ctx512.textAlign = 'center';
+ctx512.textBaseline = 'middle';
+ctx512.fillText('CATAN', 256, 190);
+ctx512.font = 'bold 120px Arial';
+ctx512.fillText('CONNECT', 256, 340);
+
+// Download 512
+setTimeout(() => {
+  canvas512.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'icon-512.png';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}, 500);
+
+// Create maskable 192x192
+const canvasM192 = document.createElement('canvas');
+canvasM192.width = 192;
+canvasM192.height = 192;
+const ctxM192 = canvasM192.getContext('2d');
+
+ctxM192.fillStyle = '#f59e0b';
+ctxM192.fillRect(0, 0, 192, 192);
+
+ctxM192.fillStyle = '#ffffff';
+ctxM192.font = 'bold 50px Arial';
+ctxM192.textAlign = 'center';
+ctxM192.textBaseline = 'middle';
+ctxM192.fillText('CATAN', 96, 70);
+ctxM192.font = 'bold 38px Arial';
+ctxM192.fillText('CONNECT', 96, 130);
+
+// Download maskable 192
+setTimeout(() => {
+  canvasM192.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'icon-maskable-192.png';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}, 1000);
+
+// Create maskable 512x512
+const canvasM512 = document.createElement('canvas');
+canvasM512.width = 512;
+canvasM512.height = 512;
+const ctxM512 = canvasM512.getContext('2d');
+
+ctxM512.fillStyle = '#f59e0b';
+ctxM512.fillRect(0, 0, 512, 512);
+
+ctxM512.fillStyle = '#ffffff';
+ctxM512.font = 'bold 140px Arial';
+ctxM512.textAlign = 'center';
+ctxM512.textBaseline = 'middle';
+ctxM512.fillText('CATAN', 256, 190);
+ctxM512.font = 'bold 105px Arial';
+ctxM512.fillText('CONNECT', 256, 340);
+
+// Download maskable 512
+setTimeout(() => {
+  canvasM512.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'icon-maskable-512.png';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    document.body.innerHTML = '<h2 style="color: green;">✅ All 4 icons downloaded!</h2><p>Check your Downloads folder for:<br>- icon-192.png<br>- icon-512.png<br>- icon-maskable-192.png<br>- icon-maskable-512.png</p><p>Move these files to the Catan Connect folder.</p>';
+  });
+}, 1500);
+</script>
+</body>
+</html>
